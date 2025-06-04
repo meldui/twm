@@ -305,17 +305,17 @@ defmodule Twm.ValidatorsTest do
     end
   end
 
-  describe "is_percent/1" do
+  describe "percent?/1" do
     test "returns true for percentage values" do
-      assert Validators.is_percent("1%") == true
-      assert Validators.is_percent("100.001%") == true
-      assert Validators.is_percent(".01%") == true
-      assert Validators.is_percent("0%") == true
+      assert Validators.percent?("1%") == true
+      assert Validators.percent?("100.001%") == true
+      assert Validators.percent?(".01%") == true
+      assert Validators.percent?("0%") == true
     end
 
     test "returns false for non-percentage values" do
-      assert Validators.is_percent("0") == false
-      assert Validators.is_percent("one%") == false
+      assert Validators.percent?("0") == false
+      assert Validators.percent?("one%") == false
     end
   end
 
