@@ -1,5 +1,4 @@
 defmodule Twm.Config.CreateTest do
-  alias Twm.Cache
   use ExUnit.Case, async: true
   doctest Twm.Config.Create
 
