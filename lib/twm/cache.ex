@@ -6,7 +6,9 @@ defmodule Twm.Cache do
   operations to improve performance by avoiding redundant operations
   on the same class combinations.
 
-  To use this module, include it into the target application at below:
+  This module can be used in two ways:
+
+  1. As a global cache for the main Twm functionality:
 
   ```
   defmodule Twm.Application do
@@ -25,6 +27,16 @@ defmodule Twm.Cache do
       Supervisor.start_link(children, opts)
     end
   end
+  ```
+
+  2. As custom cache instances for custom merge functions:
+
+  ```
+  # Create a custom cache with a specific size
+  cache_pid = Twm.Cache.ensure_started(20)
+
+  # Use the cache directly
+  Twm.Cache.put(cache_pid, "key", "value")
   ```
 
   """
@@ -52,16 +64,64 @@ defmodule Twm.Cache do
   end
 
   @doc """
+  Ensures a cache server is started with the given size.
+
+  If a server with the provided name already exists, it returns its pid.
+  Otherwise, it starts a new server with the given cache size.
+
+  ## Examples
+
+      iex> cache_pid = Twm.Cache.ensure_started(100)
+      iex> Twm.Cache.put(cache_pid, "key", "value")
+      :ok
+      iex> Twm.Cache.get(cache_pid, "key")
+      {:ok, "value"}
+
+  """
+  @spec ensure_started(pos_integer(), atom() | nil) :: pid()
+  def ensure_started(cache_size, name \\ __MODULE__)
+      when is_integer(cache_size) and cache_size > 0 do
+    if Process.whereis(name) do
+      # If the named process exists, return its pid
+      Process.whereis(name)
+    else
+      # Otherwise, start a new process
+      {:ok, pid} = start_link(name: name, cache_size: cache_size)
+      pid
+    end
+  end
+
+  @doc """
   Retrieves a value from the cache by key.
 
   Returns `{:ok, value}` if the key exists, or `:error` if it doesn't.
+
+  ## Examples
+
+      # Start a cache server for doctest
+      iex> cache_pid = Twm.Cache.ensure_started(10)
+      iex> Twm.Cache.put(cache_pid, "key1", "value1")
+      :ok
+      iex> Twm.Cache.get(cache_pid, "key1")
+      {:ok, "value1"}
+      iex> Twm.Cache.get(cache_pid, "nonexistent_key")
+      :error
+
   """
   @spec get(GenServer.server(), any()) :: {:ok, any()} | :error
   def get(server \\ __MODULE__, key) do
-    if Process.whereis(server) do
-      GenServer.call(server, {:get, key})
-    else
-      :error
+    case server do
+      pid when is_pid(pid) ->
+        # When a pid is provided, call it directly
+        GenServer.call(pid, {:get, key})
+
+      name when is_atom(name) ->
+        # When a name is provided, check if the process exists
+        if Process.whereis(name) do
+          GenServer.call(name, {:get, key})
+        else
+          :error
+        end
     end
   end
 
@@ -70,37 +130,97 @@ defmodule Twm.Cache do
 
   If the key already exists, its value is updated and it becomes the most recently used.
   If the cache is full, the least recently used entry is removed.
+
+  ## Examples
+
+      # Start a cache server for doctest
+      iex> cache_pid = Twm.Cache.ensure_started(10)
+      iex> Twm.Cache.put(cache_pid, "key1", "value1")
+      :ok
+      iex> Twm.Cache.get(cache_pid, "key1")
+      {:ok, "value1"}
+
   """
   @spec put(GenServer.server(), any(), any()) :: :ok
   def put(server \\ __MODULE__, key, value) do
-    if Process.whereis(server) do
-      GenServer.cast(server, {:put, key, value})
-    else
-      :error
+    case server do
+      pid when is_pid(pid) ->
+        # When a pid is provided, call it directly
+        GenServer.cast(pid, {:put, key, value})
+
+      name when is_atom(name) ->
+        # When a name is provided, check if the process exists
+        if Process.whereis(name) do
+          GenServer.cast(name, {:put, key, value})
+        else
+          :error
+        end
     end
   end
 
   @doc """
   Clears all entries from the cache.
+
+  ## Examples
+
+      # Start a cache server for doctest
+      iex> cache_pid = Twm.Cache.ensure_started(10)
+      iex> Twm.Cache.put(cache_pid, "key1", "value1")
+      :ok
+      iex> Twm.Cache.clear(cache_pid)
+      :ok
+      iex> Twm.Cache.get(cache_pid, "key1")
+      :error
+
   """
   @spec clear(GenServer.server()) :: :ok
   def clear(server \\ __MODULE__) do
-    if Process.whereis(server) do
-      GenServer.cast(server, :clear)
-    else
-      :error
+    case server do
+      pid when is_pid(pid) ->
+        # When a pid is provided, call it directly
+        GenServer.cast(pid, :clear)
+        :ok
+
+      name when is_atom(name) ->
+        # When a name is provided, check if the process exists
+        if Process.whereis(name) do
+          GenServer.cast(name, :clear)
+          :ok
+        else
+          :error
+        end
     end
   end
 
   @doc """
   Returns the current size of the cache.
+
+  ## Examples
+
+      # Start a cache server for doctest
+      iex> cache_pid = Twm.Cache.ensure_started(10)
+      iex> Twm.Cache.put(cache_pid, "key1", "value1")
+      :ok
+      iex> Twm.Cache.put(cache_pid, "key2", "value2")
+      :ok
+      iex> Twm.Cache.size(cache_pid)
+      2
+
   """
   @spec size(GenServer.server()) :: non_neg_integer()
   def size(server \\ __MODULE__) do
-    if Process.whereis(server) do
-      GenServer.call(server, :size)
-    else
-      0
+    case server do
+      pid when is_pid(pid) ->
+        # When a pid is provided, call it directly
+        GenServer.call(pid, :size)
+
+      name when is_atom(name) ->
+        # When a name is provided, check if the process exists
+        if Process.whereis(name) do
+          GenServer.call(name, :size)
+        else
+          0
+        end
     end
   end
 
@@ -110,23 +230,55 @@ defmodule Twm.Cache do
   If the new size is smaller than the current number of entries,
   the least recently used entries are removed until the cache fits
   the new size.
+
+  ## Examples
+
+      # Start a cache server for doctest
+      iex> cache_pid = Twm.Cache.ensure_started(100)
+      iex> # Fill cache with a few entries
+      iex> Twm.Cache.put(cache_pid, "key1", "value1")
+      :ok
+      iex> Twm.Cache.put(cache_pid, "key2", "value2")
+      :ok
+      iex> Twm.Cache.resize(cache_pid, 1)
+      :ok
+      iex> Twm.Cache.size(cache_pid)
+      1
+
   """
   @spec resize(GenServer.server(), pos_integer()) :: :ok
   def resize(server \\ __MODULE__, new_size) when is_integer(new_size) and new_size > 0 do
-    if Process.whereis(server) do
-      GenServer.cast(server, {:resize, new_size})
-    end
+    case server do
+      pid when is_pid(pid) ->
+        # When a pid is provided, call it directly
+        GenServer.cast(pid, {:resize, new_size})
+        :ok
 
-    :ok
+      name when is_atom(name) ->
+        # When a name is provided, check if the process exists
+        if Process.whereis(name) do
+          GenServer.cast(name, {:resize, new_size})
+        end
+
+        :ok
+    end
   end
 
   # Debug helper function - only used in development/testing
   @doc false
   def get_state(server \\ __MODULE__) do
-    if Process.whereis(server) do
-      GenServer.call(server, :get_state)
-    else
-      :error
+    case server do
+      pid when is_pid(pid) ->
+        # When a pid is provided, call it directly
+        GenServer.call(pid, :get_state)
+
+      name when is_atom(name) ->
+        # When a name is provided, check if the process exists
+        if Process.whereis(name) do
+          GenServer.call(name, :get_state)
+        else
+          :error
+        end
     end
   end
 

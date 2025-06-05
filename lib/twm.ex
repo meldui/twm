@@ -7,6 +7,7 @@ defmodule Twm do
   """
 
   alias Twm.Cache
+  alias Twm.Config.Create
 
   # Re-export validators functions
   alias Twm.Validators
@@ -109,4 +110,43 @@ defmodule Twm do
   """
   @spec tw_merge(String.t() | [String.t()]) :: String.t()
   def tw_merge(classes), do: merge(classes)
+
+  @doc """
+  Creates a custom tailwind merge function with the provided configuration functions.
+
+  This function allows you to create a tailwind merge function with a custom configuration.
+  It accepts one or more configuration functions that are applied in sequence.
+
+  ## Examples
+
+      iex> custom_merge = Twm.create_tailwind_merge(fn ->
+      ...>   %{
+      ...>     cache_name: Twm.Cache,
+      ...>     cache_size: 20,
+      ...>     theme: %{},
+      ...>     class_groups: %{
+      ...>       fooKey: [%{fooKey: ["bar", "baz"]}],
+      ...>       fooKey2: [%{fooKey: ["qux", "quux"]}, "other-2"],
+      ...>       otherKey: ["nother", "group"]
+      ...>     },
+      ...>     conflicting_class_groups: %{
+      ...>       fooKey: ["otherKey"],
+      ...>       otherKey: ["fooKey", "fooKey2"]
+      ...>     },
+      ...>     conflicting_class_group_modifiers: %{},
+      ...>     order_sensitive_modifiers: []
+      ...>   }
+      ...> end)
+      iex> custom_merge.("my-modifier:fooKey-bar my-modifier:fooKey-baz")
+      "my-modifier:fooKey-baz"
+  """
+  @spec create_tailwind_merge((-> map()) | [(-> map()) | (map() -> map())]) :: (String.t() ->
+                                                                                  String.t())
+  def create_tailwind_merge(config_fns) when is_list(config_fns) do
+    Create.tailwind_merge(config_fns)
+  end
+
+  def create_tailwind_merge(config_fn) when is_function(config_fn, 0) do
+    Create.tailwind_merge(config_fn)
+  end
 end

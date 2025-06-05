@@ -25,6 +25,7 @@ defmodule Twm.Config.Default do
   @spec get() :: map()
   def get do
     %{
+      cache_name: Twm.Cache,
       cache_size: 500,
       theme: theme(),
       class_groups: class_groups(),
