@@ -6,6 +6,8 @@ defmodule Twm.Merger do
   based on the provided configuration.
   """
 
+  alias Twm.ClassGroupUtils
+
   @doc """
   Merges Tailwind CSS classes based on the provided configuration.
 
@@ -25,168 +27,112 @@ defmodule Twm.Merger do
   """
   @spec merge_classes(String.t(), map()) :: String.t()
   def merge_classes(classes, config) when is_binary(classes) and is_map(config) do
-    # For the test cases specifically, we'll handle them directly
-    # This is a simplified implementation for the specific test cases
-    cond do
-      classes == "" ->
-        ""
-
-      String.contains?(classes, "my-modifier:fooKey-bar my-modifier:fooKey-baz") ->
-        "my-modifier:fooKey-baz"
-
-      String.contains?(classes, "other-modifier:fooKey-bar other-modifier:fooKey-baz") ->
-        "other-modifier:fooKey-baz"
-
-      String.contains?(classes, "group fooKey-bar") ->
-        "fooKey-bar"
-
-      String.contains?(classes, "fooKey-bar group") ->
-        "group"
-
-      String.contains?(classes, "group other-2") ->
-        "group other-2"
-
-      String.contains?(classes, "other-2 group") ->
-        "group"
-
-      String.contains?(classes, "second:group second:nother") ->
-        "second:nother"
-
-      String.contains?(classes, "fooKey-bar hello-there") ->
-        "fooKey-bar hello-there"
-
-      String.contains?(classes, "hello-there fooKey-bar") ->
-        "fooKey-bar"
-
-      true ->
-        # For other cases, use a more general approach
-        process_classes(classes, config)
+    if classes == "" do
+      ""
+    else
+      class_list = String.split(classes, ~r/\s+/, trim: true)
+      
+      # Create class group utilities for the config
+      class_utils = ClassGroupUtils.create_class_group_utils(config)
+      
+      # Parse classes and merge conflicts
+      merge_class_list(class_list, class_utils)
     end
   end
 
-  # More general implementation for processing classes
-  defp process_classes(classes, config) do
-    class_list = parse_class_list(classes)
-
-    # Group classes by their prefix or pattern to identify conflicts
-    {result_classes, conflicts_map} =
-      class_list
-      |> Enum.reduce({[], %{}}, fn class, {result_classes, conflicts} ->
-        # Parse the class to identify its group
-        parsed_class = parse_class(class, config)
-
-        case parsed_class do
-          {:ok, %{group: group, important: important}} when not is_nil(group) ->
-            if has_conflict?(group, conflicts, important) do
-              # Replace the conflicting class
-              conflicts = Map.put(conflicts, group, {class, important})
-              {result_classes, conflicts}
-            else
-              # Add a new class with its group
-              conflicts = Map.put(conflicts, group, {class, important})
-              {[class | result_classes], conflicts}
-            end
-
-          # Class doesn't belong to any group or couldn't be parsed
-          _ ->
-            {[class | result_classes], conflicts}
-        end
+  # Merge a list of classes using the class utilities
+  defp merge_class_list(class_list, class_utils) do
+    # Parse each class and track conflicts
+    parsed_classes = Enum.map(class_list, &parse_class_with_modifiers(&1, class_utils))
+    
+    # Group by conflict keys and keep the last occurrence of each group
+    conflict_map = 
+      parsed_classes
+      |> Enum.with_index()
+      |> Enum.reduce(%{}, fn {{class, parsed_info}, index}, acc ->
+        conflict_key = get_conflict_key(parsed_info, class_utils)
+        Map.put(acc, conflict_key, {class, index, parsed_info})
       end)
-
-    # Extract classes from conflicts map
-    conflict_classes =
-      conflicts_map
-      |> Map.values()
-      |> Enum.map(fn {class, _} -> class end)
-
-    # Combine all classes, maintaining original order as much as possible
-    (result_classes ++ conflict_classes)
-    |> Enum.reverse()
+    
+    # Sort by original index to maintain order and extract classes
+    conflict_map
+    |> Map.values()
+    |> Enum.sort_by(fn {_class, index, _parsed} -> index end)
+    |> Enum.map(fn {class, _index, _parsed} -> class end)
     |> Enum.join(" ")
   end
 
-  # Parse a class string into a list of individual classes
-  defp parse_class_list(classes) when is_binary(classes) do
-    classes
-    |> String.split(~r/\s+/, trim: true)
+  # Parse a class with its modifiers and important flag
+  defp parse_class_with_modifiers(class, class_utils) do
+    {important, base_class} = extract_important(class)
+    {modifiers, class_name} = extract_modifiers(base_class)
+    
+    class_group_id = class_utils.get_class_group_id.(class_name)
+    
+    parsed_info = %{
+      class_group_id: class_group_id,
+      modifiers: modifiers,
+      important: important,
+      base_class: class_name
+    }
+    
+    {class, parsed_info}
   end
 
-  # Parse an individual class to determine its group and modifiers
-  defp parse_class(class, config) do
-    # Special handling for test classes
-    cond do
-      # Match test classes with modifiers
-      String.match?(class, ~r/^[^:]+:fooKey-/) ->
-        [prefix, _] = String.split(class, ":", parts: 2)
-        {:ok, %{group: "#{prefix}:fooKey", important: false}}
+  # Extract important flag from class
+  defp extract_important("!" <> class), do: {true, class}
+  defp extract_important(class), do: {false, class}
 
-      # Match fooKey classes
-      String.match?(class, ~r/^fooKey-/) ->
-        {:ok, %{group: "fooKey", important: false}}
-
-      # Match otherKey classes
-      class in ["group", "nother"] ->
-        {:ok, %{group: "otherKey", important: false}}
-
-      # Match hello-there
-      class == "hello-there" ->
-        {:ok, %{group: "helloFromSecondConfig", important: false}}
-
-      # Match other-2
-      class == "other-2" ->
-        {:ok, %{group: "fooKey2", important: false}}
-
-      # Match padding classes (regular implementation)
-      String.match?(class, ~r/^p[xytrbl]?-\d+$/) ->
-        [prefix, _] = String.split(class, "-", parts: 2)
-        {:ok, %{group: prefix, important: false}}
-
-      # Match margin classes
-      String.match?(class, ~r/^m[xytrbl]?-\d+$/) ->
-        [prefix, _] = String.split(class, "-", parts: 2)
-        {:ok, %{group: prefix, important: false}}
-
-      # Match width/height classes
-      String.match?(class, ~r/^(w|h)-\w+$/) ->
-        [prefix, _] = String.split(class, "-", parts: 2)
-        {:ok, %{group: prefix, important: false}}
-
-      # Match color utilities
-      String.match?(class, ~r/^(bg|text|border)-\w+(-\d+)?$/) ->
-        [prefix, _] = String.split(class, "-", parts: 2)
-        {:ok, %{group: prefix, important: false}}
-
-      # Match important variants (using !)
-      String.match?(class, ~r/^!(.+)$/) ->
-        base_class = String.slice(class, 1..-1//1)
-
-        case parse_class(base_class, config) do
-          {:ok, %{group: group}} ->
-            {:ok, %{group: group, important: true}}
-
-          _ ->
-            {:error, :no_group}
+  # Extract modifiers from class using regex to handle arbitrary properties correctly
+  # Examples: 
+  # - "hover:[paint-order:normal]" -> {["hover"], "[paint-order:normal]"}
+  # - "[paint-order:markers]" -> {[], "[paint-order:markers]"}
+  # - "hover:focus:px-4" -> {["hover", "focus"], "px-4"}
+  defp extract_modifiers(class) do
+    # Use regex to match modifiers followed by the actual class
+    # This pattern looks for zero or more "modifier:" parts followed by the class
+    case Regex.run(~r/^((?:[^:\[\]]+:)*)(.+)$/, class) do
+      [_full, modifiers_part, class_part] ->
+        if modifiers_part == "" do
+          {[], class_part}
+        else
+          # Remove trailing colon and split by colon
+          modifiers = 
+            modifiers_part
+            |> String.trim_trailing(":")
+            |> String.split(":")
+            |> Enum.reject(&(&1 == ""))
+          
+          {modifiers, class_part}
         end
-
-      # No match found
-      true ->
-        {:error, :no_group}
+      
+      nil ->
+        # Fallback - no modifiers
+        {[], class}
     end
   end
 
-  # Check if a class has a conflict based on its group
-  defp has_conflict?(group, conflicts, important) do
-    # Check if we already have a class from this group
-    case Map.get(conflicts, group) do
-      nil ->
-        # No conflict
-        false
-
-      {_existing_class, existing_important} ->
-        # There's a conflict if:
-        # 1. The new class is not important and the existing one is
-        # 2. Both have the same importance level
-        !important or existing_important
+  # Get a unique conflict key for a parsed class
+  defp get_conflict_key(parsed_info, _class_utils) do
+    %{
+      class_group_id: class_group_id,
+      modifiers: modifiers,
+      important: important
+    } = parsed_info
+    
+    # For classes without a group (like malformed ones), use the base class as key
+    base_key = class_group_id || parsed_info.base_class
+    
+    # Sort modifiers to ensure consistent conflict keys regardless of order
+    # This makes "hover:focus:" and "focus:hover:" map to the same conflict group
+    sorted_modifiers = Enum.sort(modifiers)
+    modifier_key = Enum.join(sorted_modifiers, ":")
+    
+    case {modifier_key, important} do
+      {"", false} -> base_key
+      {"", true} -> "!#{base_key}"
+      {mods, false} -> "#{mods}:#{base_key}"
+      {mods, true} -> "!#{mods}:#{base_key}"
     end
   end
 end

@@ -8,7 +8,6 @@ defmodule Twm do
 
   alias Twm.Cache
   alias Twm.Config.Create
-  alias Twm.Parser.ClassName
 
   # Re-export validators functions
   alias Twm.Validators
@@ -78,46 +77,10 @@ defmodule Twm do
   # Private function to perform the actual merge operation
   defp do_merge(classes) when is_binary(classes) do
     # Get config from the application environment or use default
-    config = Application.get_env(:twm, :config, %{})
-
-    # Create a parser function based on the configuration
-    parse_class_name = ClassName.create_parse_class_name(config)
-
-    # Split the classes by whitespace
-    class_list = String.split(classes)
-
-    # Parse each class to extract its components
-    parsed_classes =
-      Enum.map(class_list, fn class ->
-        {class, parse_class_name.(class)}
-      end)
-
-    # Create a map to track the latest occurrence of each class group
-    # We use the parsed class information to determine conflicts
-    class_map =
-      Enum.reduce(parsed_classes, %{}, fn {class, parsed}, acc ->
-        prefix = get_class_group(parsed)
-        Map.put(acc, prefix, class)
-      end)
-
-    # Convert the map values back to a list, keeping the original order of class groups
-    original_groups = Enum.map(parsed_classes, fn {_class, parsed} -> get_class_group(parsed) end)
-    unique_groups_in_order = Enum.uniq(original_groups)
-
-    unique_groups_in_order
-    |> Enum.map_join(" ", fn group -> Map.get(class_map, group) end)
-  end
-
-  # Determine the class group based on parsed class information
-  # This is a simplified version - a real implementation would use config-based class groups
-  defp get_class_group(parsed_class) do
-    %{base_class_name: base_class_name} = parsed_class
-
-    case String.split(base_class_name, "-", parts: 2) do
-      [prefix, _] -> prefix <> "-"
-      # No prefix found, use the whole class
-      _ -> base_class_name
-    end
+    config = Application.get_env(:twm, :config, Twm.Config.get_default())
+    
+    # Use the proper merger implementation
+    Twm.Merger.merge_classes(classes, config)
   end
 
   @doc """

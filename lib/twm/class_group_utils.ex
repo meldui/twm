@@ -104,17 +104,26 @@ defmodule Twm.ClassGroupUtils do
 
   # Gets the class group ID for a given class name using the class map
   defp get_class_group_id(class_name, class_map) do
-    class_parts = String.split(class_name, @class_part_separator)
+    # Check for arbitrary properties first, before splitting by dash
+    case get_group_id_for_arbitrary_property(class_name) do
+      nil ->
+        # Not an arbitrary property, proceed with normal processing
+        class_parts = String.split(class_name, @class_part_separator)
 
-    # Handle negative values like "-inset-1"
-    class_parts =
-      if List.first(class_parts) == "" and length(class_parts) > 1 do
-        tl(class_parts)
-      else
-        class_parts
-      end
+        # Handle negative values like "-inset-1"
+        class_parts =
+          if List.first(class_parts) == "" and length(class_parts) > 1 do
+            tl(class_parts)
+          else
+            class_parts
+          end
 
-    get_group_recursive(class_parts, class_map) || get_group_id_for_arbitrary_property(class_name)
+        get_group_recursive(class_parts, class_map)
+      
+      arbitrary_group_id ->
+        # It's an arbitrary property
+        arbitrary_group_id
+    end
   end
 
   # Gets conflicting class group IDs for a given class group

@@ -75,6 +75,7 @@ defmodule Twm.Config.Theme do
           case Map.get(config, theme_key) do
             nil -> []
             value when is_list(value) -> value
+            value when is_map(value) -> Map.keys(value)
             value -> [value]
           end
         _ -> []
