@@ -10,6 +10,28 @@ defmodule Twm.Config.Default do
 
   alias Twm.Config.Theme
 
+  # Theme getters for theme variable namespaces
+  # @see https://tailwindcss.com/docs/theme#theme-variable-namespaces
+  defp theme_color, do: Theme.from_theme(:color)
+  defp theme_font, do: Theme.from_theme(:font)
+  defp theme_text, do: Theme.from_theme(:text)
+  defp theme_font_weight, do: Theme.from_theme(:"font-weight")
+  defp theme_tracking, do: Theme.from_theme(:tracking)
+  defp theme_leading, do: Theme.from_theme(:leading)
+  defp theme_breakpoint, do: Theme.from_theme(:breakpoint)
+  defp theme_container, do: Theme.from_theme(:container)
+  defp theme_spacing, do: Theme.from_theme(:spacing)
+  defp theme_radius, do: Theme.from_theme(:radius)
+  defp theme_shadow, do: Theme.from_theme(:shadow)
+  defp theme_inset_shadow, do: Theme.from_theme(:"inset-shadow")
+  defp theme_text_shadow, do: Theme.from_theme(:"text-shadow")
+  defp theme_drop_shadow, do: Theme.from_theme(:"drop-shadow")
+  defp theme_blur, do: Theme.from_theme(:blur)
+  defp theme_perspective, do: Theme.from_theme(:perspective)
+  defp theme_aspect, do: Theme.from_theme(:aspect)
+  defp theme_ease, do: Theme.from_theme(:ease)
+  defp theme_animate, do: Theme.from_theme(:animate)
+
   @doc """
   Returns the default configuration for Twm.
 
@@ -75,7 +97,7 @@ defmodule Twm.Config.Default do
   end
 
   defp scale_unambiguous_spacing do
-    [&Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1, &Theme.spacing/1]
+    [&Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1, theme_spacing()]
   end
 
   defp scale_inset do
@@ -188,7 +210,7 @@ defmodule Twm.Config.Default do
         "auto",
         "full",
         &Twm.is_arbitrary_value/1,
-        &Theme.spacing/1
+        theme_spacing()
       ],
 
       # ... (More class groups would be here, but abbreviated for response size)
