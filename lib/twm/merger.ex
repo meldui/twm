@@ -45,17 +45,34 @@ defmodule Twm.Merger do
     # Parse each class and track conflicts
     parsed_classes = Enum.map(class_list, &parse_class_with_modifiers(&1, class_utils))
     
-    # Group by conflict keys and keep the last occurrence of each group
-    conflict_map = 
+    # Group by conflict keys and handle conflicting class groups
+    result_map = 
       parsed_classes
       |> Enum.with_index()
       |> Enum.reduce(%{}, fn {{class, parsed_info}, index}, acc ->
+        class_group_id = parsed_info.class_group_id
+        modifiers = parsed_info.modifiers
+        important = parsed_info.important
+        
+        # Create the primary conflict key for this class
         conflict_key = get_conflict_key(parsed_info, class_utils)
-        Map.put(acc, conflict_key, {class, index, parsed_info})
+        
+        # Get all conflicting class group IDs
+        conflicting_groups = if class_group_id do
+          class_utils.get_conflicting_class_group_ids.(class_group_id, false)
+        else
+          []
+        end
+        
+        # Remove any existing classes that conflict with this one
+        updated_acc = remove_conflicting_classes(acc, class_group_id, conflicting_groups, modifiers, important)
+        
+        # Add this class to the map
+        Map.put(updated_acc, conflict_key, {class, index, parsed_info})
       end)
     
     # Sort by original index to maintain order and extract classes
-    conflict_map
+    result_map
     |> Map.values()
     |> Enum.sort_by(fn {_class, index, _parsed} -> index end)
     |> Enum.map(fn {class, _index, _parsed} -> class end)
@@ -109,6 +126,31 @@ defmodule Twm.Merger do
       nil ->
         # Fallback - no modifiers
         {[], class}
+    end
+  end
+
+  # Remove conflicting classes from the accumulator
+  defp remove_conflicting_classes(acc, class_group_id, conflicting_groups, modifiers, important) do
+    if class_group_id && !Enum.empty?(conflicting_groups) do
+      Enum.reduce(acc, %{}, fn {key, {class, index, parsed_info}}, new_acc ->
+        existing_group_id = parsed_info.class_group_id
+        existing_modifiers = parsed_info.modifiers
+        existing_important = parsed_info.important
+        
+        # Check if this existing class conflicts with the new one
+        should_remove = existing_group_id && 
+                       existing_modifiers == modifiers && 
+                       existing_important == important &&
+                       (existing_group_id in conflicting_groups || existing_group_id == class_group_id)
+        
+        if should_remove do
+          new_acc
+        else
+          Map.put(new_acc, key, {class, index, parsed_info})
+        end
+      end)
+    else
+      acc
     end
   end
 

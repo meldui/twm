@@ -219,8 +219,30 @@ defmodule Twm.ClassGroupUtils do
   # Process a class group by iterating through its definitions
   defp process_class_group(class_group, class_map, class_group_id, theme)
        when is_list(class_group) do
-    Enum.reduce(class_group, class_map, fn class_definition, acc ->
-      add_class_definition_to_map(class_definition, acc, class_group_id, theme)
+    # Separate literal strings from validators and other definitions
+    {literals, validators_and_others} = 
+      Enum.split_with(class_group, fn item -> 
+        is_binary(item) and item != ""
+      end)
+    
+    # Process literals first to build the tree structure
+    class_map_with_literals = 
+      Enum.reduce(literals, class_map, fn class_definition, acc ->
+        add_class_definition_to_map(class_definition, acc, class_group_id, theme)
+      end)
+    
+    # Find common prefix from literals to determine where validators should go
+    common_prefix = find_common_prefix(literals)
+    
+    # Process validators and other definitions
+    Enum.reduce(validators_and_others, class_map_with_literals, fn class_definition, acc ->
+      if is_function(class_definition) and !theme_getter?(class_definition) do
+        # This is a validator - place it at the appropriate level
+        add_validator_to_map(class_definition, acc, class_group_id, common_prefix)
+      else
+        # Process normally (theme getters, maps, etc.)
+        add_class_definition_to_map(class_definition, acc, class_group_id, theme)
+      end
     end)
   end
 
@@ -248,7 +270,8 @@ defmodule Twm.ClassGroupUtils do
       theme_result = Twm.Config.Theme.call_theme_getter(class_definition, theme)
       process_class_group(theme_result, class_map, class_group_id, theme)
     else
-      # Regular validator function
+      # Regular validator function - this shouldn't happen here anymore 
+      # as validators are handled separately, but keep for backwards compatibility
       validator = %{
         validator: class_definition,
         class_group_id: class_group_id
@@ -370,6 +393,75 @@ defmodule Twm.ClassGroupUtils do
     next_part = Map.get(class_map, :next_part, %{})
     updated_next_part = Map.put(next_part, path, object)
     %{class_map | next_part: updated_next_part}
+  end
+
+  # Find common prefix from a list of class names
+  defp find_common_prefix([]), do: ""
+  defp find_common_prefix([single]), do: extract_prefix(single)
+  defp find_common_prefix(class_names) do
+    # Extract prefixes and find the most common one
+    prefixes = Enum.map(class_names, &extract_prefix/1)
+    
+    # Find the most frequent prefix
+    prefixes
+    |> Enum.frequencies()
+    |> Enum.max_by(fn {_prefix, count} -> count end, fn -> {"", 0} end)
+    |> elem(0)
+  end
+  
+  # Extract prefix from a class name (everything before the first dash after the initial part)
+  defp extract_prefix(class_name) do
+    case String.split(class_name, @class_part_separator, parts: 2) do
+      [prefix, _] -> prefix
+      [_] -> ""
+    end
+  end
+  
+  # Add a validator to the appropriate level in the class map
+  defp add_validator_to_map(validator_function, class_map, class_group_id, "") do
+    # No common prefix, add to root level
+    validator = %{
+      validator: validator_function,
+      class_group_id: class_group_id
+    }
+    
+    validators = Map.get(class_map, :validators, [])
+    Map.put(class_map, :validators, [validator | validators])
+  end
+  
+  defp add_validator_to_map(validator_function, class_map, class_group_id, prefix) do
+    # For multi-dash prefixes like "min-h", we need to follow the path structure
+    # that the literal classes create: min -> h
+    prefix_parts = String.split(prefix, @class_part_separator)
+    
+    # Add validator to the deepest level that matches the literal structure
+    add_validator_to_path(class_map, prefix_parts, validator_function, class_group_id)
+  end
+  
+  # Add validator following the path structure
+  defp add_validator_to_path(class_map, [], validator_function, class_group_id) do
+    # At the target level, add the validator
+    validator = %{
+      validator: validator_function,
+      class_group_id: class_group_id
+    }
+    
+    validators = Map.get(class_map, :validators, [])
+    Map.put(class_map, :validators, [validator | validators])
+  end
+  
+  defp add_validator_to_path(class_map, [part | rest], validator_function, class_group_id) do
+    # Ensure this part exists
+    updated_map = ensure_path_exists(class_map, part)
+    
+    # Get the object at this part
+    part_object = get_at_path(updated_map, part)
+    
+    # Recursively add to the deeper level
+    updated_part = add_validator_to_path(part_object, rest, validator_function, class_group_id)
+    
+    # Put the updated part back
+    put_at_path(updated_map, part, updated_part)
   end
 
   # Check if a function is a theme getter
