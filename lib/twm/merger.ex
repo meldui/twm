@@ -100,32 +100,58 @@ defmodule Twm.Merger do
   defp extract_important("!" <> class), do: {true, class}
   defp extract_important(class), do: {false, class}
 
-  # Extract modifiers from class using regex to handle arbitrary properties correctly
+  # Extract modifiers from class using proper parsing to handle arbitrary variants
   # Examples: 
   # - "hover:[paint-order:normal]" -> {["hover"], "[paint-order:normal]"}
   # - "[paint-order:markers]" -> {[], "[paint-order:markers]"}
   # - "hover:focus:px-4" -> {["hover", "focus"], "px-4"}
+  # - "[&>*]:underline" -> {["[&>*]"], "underline"}
+  # - "dark:lg:hover:[&>*]:underline" -> {["dark", "lg", "hover", "[&>*]"], "underline"}
   defp extract_modifiers(class) do
-    # Use regex to match modifiers followed by the actual class
-    # This pattern looks for zero or more "modifier:" parts followed by the class
-    case Regex.run(~r/^((?:[^:\[\]]+:)*)(.+)$/, class) do
-      [_full, modifiers_part, class_part] ->
-        if modifiers_part == "" do
-          {[], class_part}
+    parse_modifiers(class, [], 0, 0, 0, "")
+  end
+
+  # Parse modifiers while respecting bracket depth for arbitrary variants
+  defp parse_modifiers(class, modifiers, index, bracket_depth, paren_depth, current_part) when index < byte_size(class) do
+    char = String.at(class, index)
+    
+    cond do
+      # Handle colon separator when not inside brackets or parentheses
+      char == ":" && bracket_depth == 0 && paren_depth == 0 ->
+        if current_part != "" do
+          parse_modifiers(class, modifiers ++ [current_part], index + 1, bracket_depth, paren_depth, "")
         else
-          # Remove trailing colon and split by colon
-          modifiers = 
-            modifiers_part
-            |> String.trim_trailing(":")
-            |> String.split(":")
-            |> Enum.reject(&(&1 == ""))
-          
-          {modifiers, class_part}
+          parse_modifiers(class, modifiers, index + 1, bracket_depth, paren_depth, "")
         end
       
-      nil ->
-        # Fallback - no modifiers
-        {[], class}
+      # Handle opening bracket
+      char == "[" ->
+        parse_modifiers(class, modifiers, index + 1, bracket_depth + 1, paren_depth, current_part <> char)
+      
+      # Handle closing bracket
+      char == "]" ->
+        parse_modifiers(class, modifiers, index + 1, bracket_depth - 1, paren_depth, current_part <> char)
+      
+      # Handle opening parenthesis
+      char == "(" ->
+        parse_modifiers(class, modifiers, index + 1, bracket_depth, paren_depth + 1, current_part <> char)
+      
+      # Handle closing parenthesis
+      char == ")" ->
+        parse_modifiers(class, modifiers, index + 1, bracket_depth, paren_depth - 1, current_part <> char)
+      
+      # Handle any other character
+      true ->
+        parse_modifiers(class, modifiers, index + 1, bracket_depth, paren_depth, current_part <> char)
+    end
+  end
+
+  # Base case: end of string
+  defp parse_modifiers(_class, modifiers, _index, _bracket_depth, _paren_depth, current_part) do
+    if current_part != "" do
+      {modifiers, current_part}
+    else
+      {modifiers, ""}
     end
   end
 
@@ -165,9 +191,8 @@ defmodule Twm.Merger do
     # For classes without a group (like malformed ones), use the base class as key
     base_key = class_group_id || parsed_info.base_class
     
-    # Sort modifiers to ensure consistent conflict keys regardless of order
-    # This makes "hover:focus:" and "focus:hover:" map to the same conflict group
-    sorted_modifiers = Enum.sort(modifiers)
+    # Sort modifiers but preserve position of arbitrary variants (those starting with [)
+    sorted_modifiers = sort_modifiers_preserving_arbitrary_variants(modifiers)
     modifier_key = Enum.join(sorted_modifiers, ":")
     
     case {modifier_key, important} do
@@ -176,5 +201,23 @@ defmodule Twm.Merger do
       {mods, false} -> "#{mods}:#{base_key}"
       {mods, true} -> "!#{mods}:#{base_key}"
     end
+  end
+
+  # Sort modifiers while preserving the position of arbitrary variants
+  # Arbitrary variants (starting with [) are position-sensitive
+  defp sort_modifiers_preserving_arbitrary_variants(modifiers) do
+    {sorted, unsorted} = 
+      Enum.reduce(modifiers, {[], []}, fn modifier, {sorted_acc, unsorted_acc} ->
+        if String.starts_with?(modifier, "[") do
+          # Arbitrary variant - preserve position by flushing unsorted and adding this one
+          {sorted_acc ++ Enum.sort(unsorted_acc) ++ [modifier], []}
+        else
+          # Regular modifier - add to unsorted group
+          {sorted_acc, unsorted_acc ++ [modifier]}
+        end
+      end)
+    
+    # Add any remaining unsorted modifiers
+    sorted ++ Enum.sort(unsorted)
   end
 end

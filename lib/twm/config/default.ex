@@ -461,6 +461,14 @@ defmodule Twm.Config.Default do
         }
       ],
       text_align: ["left", "center", "right", "justify", "start", "end"],
+      text_decoration: ["underline", "overline", "line-through", "no-underline"],
+      text_decoration_style: ["solid", "double", "dotted", "dashed", "wavy"],
+      text_decoration_thickness: ["auto", "from-font", "0", "1", "2", "4", "8"],
+      text_underline_offset: ["auto", "0", "1", "2", "4", "8"],
+      text_decoration_color: [&Twm.is_arbitrary_value/1],
+      
+      # Display utilities
+      flex_utilities: ["flex", "grid"],
       
       # Additional essential class groups can be added here as needed
     }
@@ -526,7 +534,15 @@ defmodule Twm.Config.Default do
       # Typography conflicts
       font_size: ["leading"],
       font_weight: [],
-      text_align: []
+      text_align: [],
+      text_decoration: ["text_decoration_style", "text_decoration_thickness", "text_underline_offset", "text_decoration_color"],
+      text_decoration_style: ["text_decoration"],
+      text_decoration_thickness: ["text_decoration"],
+      text_underline_offset: ["text_decoration"],
+      text_decoration_color: ["text_decoration"],
+      
+      # Display conflicts
+      flex_utilities: ["display"]
     }
   end
 
