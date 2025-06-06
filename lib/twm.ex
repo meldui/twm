@@ -79,17 +79,18 @@ defmodule Twm do
   defp do_merge(classes) when is_binary(classes) do
     # Get config from the application environment or use default
     config = Application.get_env(:twm, :config, %{})
-    
+
     # Create a parser function based on the configuration
     parse_class_name = ClassName.create_parse_class_name(config)
-    
+
     # Split the classes by whitespace
     class_list = String.split(classes)
 
     # Parse each class to extract its components
-    parsed_classes = Enum.map(class_list, fn class -> 
-      {class, parse_class_name.(class)}
-    end)
+    parsed_classes =
+      Enum.map(class_list, fn class ->
+        {class, parse_class_name.(class)}
+      end)
 
     # Create a map to track the latest occurrence of each class group
     # We use the parsed class information to determine conflicts
@@ -111,7 +112,7 @@ defmodule Twm do
   # This is a simplified version - a real implementation would use config-based class groups
   defp get_class_group(parsed_class) do
     %{base_class_name: base_class_name} = parsed_class
-    
+
     case String.split(base_class_name, "-", parts: 2) do
       [prefix, _] -> prefix <> "-"
       # No prefix found, use the whole class
