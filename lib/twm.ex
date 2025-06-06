@@ -13,6 +13,7 @@ defmodule Twm do
   alias Twm.Validators
 
   defdelegate is_any(), to: Validators, as: :any?
+  defdelegate is_any(value), to: Validators, as: :any?
   defdelegate is_any_non_arbitrary(value), to: Validators
   defdelegate is_arbitrary_image(value), to: Validators
   defdelegate is_arbitrary_length(value), to: Validators
