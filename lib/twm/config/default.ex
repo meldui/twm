@@ -408,6 +408,9 @@ defmodule Twm.Config.Default do
       h: [%{h: scale_sizing()}],
       size: [%{size: scale_sizing()}],
 
+      # Background
+      bg: [%{bg: scale_color()}],
+
       # Typography
       "font-size": [%{"font-size": ["xs", "sm", "base", "lg", "xl", &Twm.is_arbitrary_value/1]}],
 
@@ -438,6 +441,7 @@ defmodule Twm.Config.Default do
       my: ["mt", "mb"],
       size: ["w", "h"],
       "font-size": ["leading"],
+      bg: [],
       "fvn-normal": [
         "fvn-ordinal",
         "fvn-slashed-zero",
