@@ -414,6 +414,9 @@ defmodule Twm.Config.Default do
       # Typography
       "font-size": [%{"font-size": ["xs", "sm", "base", "lg", "xl", &Twm.is_arbitrary_value/1]}],
 
+      # Content
+      content: [%{content: ["none", &Twm.is_arbitrary_value/1]}],
+
       # Font Variant Numeric - separated by type to handle conflicts correctly
       "fvn-normal": ["normal-nums"],
       "fvn-ordinal": ["ordinal"],
@@ -473,6 +476,7 @@ defmodule Twm.Config.Default do
       "touch-pinch": ["touch-action"],
       shadow: [],
       ring: [],
+      content: [],
       "line-clamp": ["overflow", "display"]
     }
   end
