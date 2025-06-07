@@ -108,17 +108,15 @@ defmodule Twm.ClassGroupUtils do
     case get_group_id_for_arbitrary_property(class_name) do
       nil ->
         # Not an arbitrary property, proceed with normal processing
-        class_parts = String.split(class_name, @class_part_separator)
-
         # Handle negative values like "-inset-1"
-        class_parts =
-          if List.first(class_parts) == "" and length(class_parts) > 1 do
-            tl(class_parts)
-          else
-            class_parts
-          end
+        clean_class_name = if String.starts_with?(class_name, "-") do
+          String.slice(class_name, 1..-1//1)
+        else
+          class_name
+        end
 
-        get_group_recursive(class_parts, class_map)
+        # Try to find the longest matching prefix first
+        find_class_group_with_prefix_matching(clean_class_name, class_map)
       
       arbitrary_group_id ->
         # It's an arbitrary property
@@ -151,6 +149,47 @@ defmodule Twm.ClassGroupUtils do
       conflicts ++ modifier_conflicts
     else
       conflicts
+    end
+  end
+
+  # Try to find class group by matching prefixes of increasing length
+  defp find_class_group_with_prefix_matching(class_name, class_map) do
+    # Get all possible prefixes by splitting on dashes
+    parts = String.split(class_name, @class_part_separator)
+    
+    # Try each possible prefix length, starting from the longest
+    find_longest_prefix_match(parts, class_map)
+  end
+
+  # Find the longest matching prefix in the class map
+  defp find_longest_prefix_match(parts, class_map) do
+    find_longest_prefix_match(parts, class_map, length(parts))
+  end
+
+  defp find_longest_prefix_match(_parts, _class_map, 0) do
+    nil
+  end
+
+  defp find_longest_prefix_match(parts, class_map, prefix_length) do
+    {prefix_parts, suffix_parts} = Enum.split(parts, prefix_length)
+    prefix = Enum.join(prefix_parts, @class_part_separator)
+    
+    next_part = Map.get(class_map, :next_part, %{})
+    
+    case Map.get(next_part, prefix) do
+      nil ->
+        # No match for this prefix length, try shorter prefix
+        find_longest_prefix_match(parts, class_map, prefix_length - 1)
+      
+      prefix_map ->
+        # Found a match for this prefix, now process the suffix
+        if Enum.empty?(suffix_parts) do
+          # No suffix, check if this prefix itself is a complete class
+          Map.get(prefix_map, :class_group_id)
+        else
+          # There's a suffix, continue processing
+          get_group_recursive(suffix_parts, prefix_map)
+        end
     end
   end
 

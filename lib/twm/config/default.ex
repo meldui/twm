@@ -420,7 +420,20 @@ defmodule Twm.Config.Default do
       "fvn-slashed-zero": ["slashed-zero"],
       "fvn-figure": ["lining-nums", "oldstyle-nums"],
       "fvn-spacing": ["proportional-nums", "tabular-nums"],
-      "fvn-fraction": ["diagonal-fractions", "stacked-fractions"]
+      "fvn-fraction": ["diagonal-fractions", "stacked-fractions"],
+
+      # Effects
+      shadow: [%{shadow: ["", "sm", "md", "lg", "xl", "2xl", "inner", "none", &Twm.is_arbitrary_value/1]}],
+      ring: [%{ring: ["", "0", "1", "2", "4", "8", &Twm.is_arbitrary_value/1]}],
+
+      # Interactivity
+      "touch-action": [%{touch: ["auto", "none", "manipulation"]}],
+      "touch-pan-x": [%{touch: ["pan-x", "pan-left", "pan-right"]}],
+      "touch-pan-y": [%{touch: ["pan-y", "pan-up", "pan-down"]}],
+      "touch-pinch": [%{touch: ["pinch-zoom"]}],
+
+      # Layout
+      "line-clamp": [%{"line-clamp": ["none", &Twm.is_integer/1, &Twm.is_arbitrary_value/1]}]
     }
   end
 
@@ -453,7 +466,14 @@ defmodule Twm.Config.Default do
       "fvn-slashed-zero": ["fvn-normal"],
       "fvn-figure": ["fvn-normal"],
       "fvn-spacing": ["fvn-normal"],
-      "fvn-fraction": ["fvn-normal"]
+      "fvn-fraction": ["fvn-normal"],
+      "touch-action": ["touch-pan-x", "touch-pan-y", "touch-pinch"],
+      "touch-pan-x": ["touch-action"],
+      "touch-pan-y": ["touch-action"],
+      "touch-pinch": ["touch-action"],
+      shadow: [],
+      ring: [],
+      "line-clamp": ["overflow", "display"]
     }
   end
 
