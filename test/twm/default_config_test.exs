@@ -20,8 +20,8 @@ defmodule Twm.DefaultConfigTest do
 
       # Test conflicting class groups
       assert is_list(default_config.conflicting_class_groups.inset)
-      assert "inset_x" in default_config.conflicting_class_groups.inset
-      assert "inset_y" in default_config.conflicting_class_groups.inset
+      assert "inset-x" in default_config.conflicting_class_groups.inset
+      assert "inset-y" in default_config.conflicting_class_groups.inset
     end
 
     test "can be extended with custom options" do

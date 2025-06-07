@@ -293,16 +293,19 @@ defmodule Twm.ClassGroupUtils do
        when is_map(class_definition) do
     # Process nested map structure
     Enum.reduce(class_definition, class_map, fn {key, nested_group}, acc ->
-      # Create or get the path for this key
+      # For maps like %{"overflow-x": ["auto", "hidden", ...]}, we need to handle
+      # the key as a complete class prefix, not split it by dashes
       key_string = to_string(key)
-      updated_map = ensure_path_exists(acc, key_string)
-
+      
+      # Add the complete key as a path in the class map
+      updated_map = add_class_path_to_map(acc, key_string, nil)
+      
       # Get the target object at this path
       target_object = get_at_path(updated_map, key_string)
-
-      # Process the nested group
+      
+      # Process the nested group at this location
       updated_target = process_class_group(nested_group, target_object, class_group_id, theme)
-
+      
       # Put the updated target back
       put_at_path(updated_map, key_string, updated_target)
     end)
@@ -324,16 +327,24 @@ defmodule Twm.ClassGroupUtils do
     put_at_path(updated_map, key_string, updated_target)
   end
 
-  # Add a class path (like "space-x-1") to the class map
+  # Add a class path (like "space-x-1" or "overflow-x") to the class map
   defp add_class_path_to_map(class_map, class_path, class_group_id) do
-    path_parts = String.split(class_path, @class_part_separator)
-
-    # Handle negative classes by removing the leading empty string
-    path_parts =
-      if List.first(path_parts) == "" and length(path_parts) > 1 do
-        tl(path_parts)
+    # For complete class prefixes (like "overflow-x"), treat as single path part
+    # For class instances (like "space-x-1"), split by separator
+    path_parts = 
+      if class_group_id == nil do
+        # This is a prefix being added, keep as single part
+        [class_path]
       else
-        path_parts
+        # This is a complete class, split normally
+        parts = String.split(class_path, @class_part_separator)
+        
+        # Handle negative classes by removing the leading empty string
+        if List.first(parts) == "" and length(parts) > 1 do
+          tl(parts)
+        else
+          parts
+        end
       end
 
     add_path_parts_to_map(class_map, path_parts, class_group_id)
@@ -378,8 +389,9 @@ defmodule Twm.ClassGroupUtils do
     end
   end
 
-  # Get object at a specific path
+  # Get object at a specific path (handle paths that may contain hyphens)
   defp get_at_path(class_map, path) do
+    # For paths like "overflow-x", look directly in next_part
     get_in(class_map, [:next_part, path]) ||
       %{
         next_part: %{},
@@ -388,8 +400,9 @@ defmodule Twm.ClassGroupUtils do
       }
   end
 
-  # Put object at a specific path
+  # Put object at a specific path (handle paths that may contain hyphens)
   defp put_at_path(class_map, path, object) do
+    # For paths like "overflow-x", put directly in next_part
     next_part = Map.get(class_map, :next_part, %{})
     updated_next_part = Map.put(next_part, path, object)
     %{class_map | next_part: updated_next_part}

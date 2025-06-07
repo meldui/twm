@@ -280,10 +280,10 @@ defmodule Twm.Config.Default do
       breakpoint: [&Twm.is_tshirt_size/1],
       color: [&Twm.is_any/1],
       container: [&Twm.is_tshirt_size/1],
-      "drop-shadow": [&Twm.is_tshirt_size/1],
+      drop_shadow: [&Twm.is_tshirt_size/1],
       ease: ["in", "out", "in-out"],
       font: [&Twm.is_any_non_arbitrary/1],
-      "font-weight": [
+      font_weight: [
         "thin",
         "extralight", 
         "light",
@@ -294,14 +294,14 @@ defmodule Twm.Config.Default do
         "extrabold",
         "black"
       ],
-      "inset-shadow": [&Twm.is_tshirt_size/1],
+      inset_shadow: [&Twm.is_tshirt_size/1],
       leading: ["none", "tight", "snug", "normal", "relaxed", "loose"],
       perspective: ["dramatic", "near", "normal", "midrange", "distant", "none"],
       radius: [&Twm.is_tshirt_size/1],
       shadow: [&Twm.is_tshirt_size/1],
       spacing: ["px", &Twm.is_number/1],
       text: [&Twm.is_tshirt_size/1],
-      "text-shadow": [&Twm.is_tshirt_size/1],
+      text_shadow: [&Twm.is_tshirt_size/1],
       tracking: ["tighter", "tight", "normal", "wide", "wider", "widest"]
     }
   end
