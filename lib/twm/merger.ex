@@ -8,6 +8,7 @@ defmodule Twm.Merger do
 
   alias Twm.ClassGroupUtils
   alias Twm.Parser.ClassName
+  alias Twm.SortModifiers
 
   @doc """
   Merges Tailwind CSS classes based on the provided configuration.
@@ -40,12 +41,12 @@ defmodule Twm.Merger do
       parse_class_name = ClassName.create_parse_class_name(config)
 
       # Parse classes and merge conflicts
-      merge_class_list(class_list, class_utils, parse_class_name)
+      merge_class_list(class_list, class_utils, parse_class_name, config)
     end
   end
 
   # Merge a list of classes using the class utilities
-  defp merge_class_list(class_list, class_utils, parse_class_name) do
+  defp merge_class_list(class_list, class_utils, parse_class_name, config) do
     # Parse each class and track conflicts
     parsed_classes =
       Enum.map(class_list, &parse_class_with_modifiers(&1, class_utils, parse_class_name))
@@ -60,12 +61,13 @@ defmodule Twm.Merger do
         important = parsed_info.important
 
         # Create the primary conflict key for this class
-        conflict_key = get_conflict_key(parsed_info, class_utils)
+        conflict_key = get_conflict_key(parsed_info, class_utils, config)
 
         # Get all conflicting class group IDs
+        has_postfix_modifier = Map.get(parsed_info, :has_postfix_modifier, false)
         conflicting_groups =
           if class_group_id do
-            class_utils.get_conflicting_class_group_ids.(class_group_id, false)
+            class_utils.get_conflicting_class_group_ids.(class_group_id, has_postfix_modifier)
           else
             []
           end
@@ -112,7 +114,8 @@ defmodule Twm.Merger do
         modifiers: [],
         important: false,
         base_class: class,
-        original_class: class
+        original_class: class,
+        has_postfix_modifier: false
       }
 
       {class, parsed_info}
@@ -120,6 +123,7 @@ defmodule Twm.Merger do
       modifiers = Map.get(parsed_class_name, :modifiers, [])
       important = Map.get(parsed_class_name, :has_important_modifier, false)
       base_class = Map.get(parsed_class_name, :base_class_name, class)
+      has_postfix_modifier = Map.get(parsed_class_name, :maybe_postfix_modifier_position) != nil
 
       # Get class group ID based on the base class (which may have been transformed)
       transformed_class_group_id = class_utils.get_class_group_id.(base_class)
@@ -165,7 +169,8 @@ defmodule Twm.Merger do
         modifiers: modifiers,
         important: important,
         base_class: base_class,
-        original_class: class
+        original_class: class,
+        has_postfix_modifier: has_postfix_modifier
       }
 
       {output_class, parsed_info}
@@ -213,7 +218,7 @@ defmodule Twm.Merger do
   end
 
   # Get a unique conflict key for a parsed class
-  defp get_conflict_key(parsed_info, _class_utils) do
+  defp get_conflict_key(parsed_info, _class_utils, config) do
     %{
       class_group_id: class_group_id,
       modifiers: modifiers,
@@ -230,9 +235,24 @@ defmodule Twm.Merger do
         parsed_info.base_class
       end
 
-    # Sort modifiers but preserve position of arbitrary variants (those starting with [)
-    sorted_modifiers = sort_modifiers_preserving_arbitrary_variants(modifiers)
-    modifier_key = Enum.join(sorted_modifiers, ":")
+    # Handle wildcard position sensitivity for conflict key generation
+    # Only preserve order when wildcards are in different positions relative to other modifiers
+    modifier_key =
+      if Enum.any?(modifiers, &(&1 == "*")) do
+        # Check if this is a case where wildcard position matters for conflicts
+        if wildcard_position_affects_conflicts?(modifiers) do
+          # Preserve original order for position-sensitive wildcards
+          Enum.join(modifiers, ":")
+        else
+          # Use proper sorting logic for wildcards in same relative position
+          sorted_modifiers = sort_modifiers_with_config(modifiers, config)
+          Enum.join(sorted_modifiers, ":")
+        end
+      else
+        # Use proper sorting logic that respects order-sensitive modifiers
+        sorted_modifiers = sort_modifiers_with_config(modifiers, config)
+        Enum.join(sorted_modifiers, ":")
+      end
 
     case {modifier_key, important} do
       {"", false} -> base_key
@@ -242,21 +262,23 @@ defmodule Twm.Merger do
     end
   end
 
-  # Sort modifiers while preserving the position of arbitrary variants
-  # Arbitrary variants (starting with [) are position-sensitive
-  defp sort_modifiers_preserving_arbitrary_variants(modifiers) do
-    {sorted, unsorted} =
-      Enum.reduce(modifiers, {[], []}, fn modifier, {sorted_acc, unsorted_acc} ->
-        if String.starts_with?(modifier, "[") do
-          # Arbitrary variant - preserve position by flushing unsorted and adding this one
-          {sorted_acc ++ Enum.sort(unsorted_acc) ++ [modifier], []}
-        else
-          # Regular modifier - add to unsorted group
-          {sorted_acc, unsorted_acc ++ [modifier]}
-        end
-      end)
-
-    # Add any remaining unsorted modifiers
-    sorted ++ Enum.sort(unsorted)
+  # Determines if wildcard position affects conflict resolution
+  # Returns true if wildcards are in different relative positions that should be preserved
+  defp wildcard_position_affects_conflicts?(modifiers) do
+    wildcard_index = Enum.find_index(modifiers, &(&1 == "*"))
+    
+    if wildcard_index do
+      # Check if wildcard is at beginning or end (position-sensitive cases)
+      wildcard_index == 0 or wildcard_index == length(modifiers) - 1
+    else
+      false
+    end
   end
+
+  # Sort modifiers using proper SortModifiers logic with the provided config
+  defp sort_modifiers_with_config(modifiers, config) do
+    sort_fn = SortModifiers.create_sort_modifiers(config)
+    sort_fn.(modifiers)
+  end
+
 end

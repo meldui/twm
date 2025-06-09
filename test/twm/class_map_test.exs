@@ -200,7 +200,7 @@ defmodule Twm.ClassMapTest do
       assert Map.has_key?(class_groups_by_first_part, "overflow-y")
       assert Map.has_key?(class_groups_by_first_part, "overscroll-x")
       assert Map.has_key?(class_groups_by_first_part, "overscroll-y")
-      assert Map.has_key?(class_groups_by_first_part, "font-size")
+      assert Map.has_key?(class_groups_by_first_part, "text")
     end
 
     test "produces comprehensive class groups mapping like original TypeScript" do

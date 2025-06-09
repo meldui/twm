@@ -52,19 +52,13 @@ defmodule Twm do
   """
   @spec merge(String.t() | [String.t()]) :: String.t()
   def merge(classes) when is_binary(classes) do
-    # Try to get result from cache first
     case Cache.get(classes) do
       {:ok, result} ->
-        # Cache hit
         result
 
       :error ->
-        # Cache miss - perform the merge operation
         result = do_merge(classes)
-
-        # Cache the result
         Cache.put(classes, result)
-
         result
     end
   end

@@ -58,7 +58,7 @@ defmodule Twm.Parser.ClassNameTest do
                is_external: false,
                modifiers: [],
                has_important_modifier: false,
-               base_class_name: "bg-red-500/50",
+               base_class_name: "bg-red-500",
                maybe_postfix_modifier_position: 10
              }
     end

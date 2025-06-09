@@ -93,14 +93,24 @@ defmodule Twm.Parser.ClassName do
         String.slice(class_name, modifier_start..-1//1)
       end
 
-    base_class_name = strip_important_modifier(base_class_name_with_important_modifier)
-    has_important_modifier = base_class_name != base_class_name_with_important_modifier
+    base_class_name_stripped_important = strip_important_modifier(base_class_name_with_important_modifier)
+    has_important_modifier = base_class_name_stripped_important != base_class_name_with_important_modifier
 
     maybe_postfix_modifier_position =
       if postfix_modifier_position && postfix_modifier_position > modifier_start do
         postfix_modifier_position - modifier_start
       else
         nil
+      end
+
+    # Strip postfix modifier from base class name if present
+    # Only strip if there's actually a "/" at the postfix modifier position
+    base_class_name =
+      if maybe_postfix_modifier_position && 
+         String.at(base_class_name_stripped_important, maybe_postfix_modifier_position) == "/" do
+        String.slice(base_class_name_stripped_important, 0, maybe_postfix_modifier_position)
+      else
+        base_class_name_stripped_important
       end
 
     %{

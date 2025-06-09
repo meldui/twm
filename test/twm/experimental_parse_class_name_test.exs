@@ -147,7 +147,7 @@ defmodule Twm.ExperimentalParseClassNameTest do
 
       # Test with arbitrary values - the transformation should be applied
       result = tw_merge.("text-[12px] text-[14px]")
-      assert result == "text-[[12px]] text-[[14px]]"
+      assert result == "text-[[14px]]"
     end
 
     test "experimental parser with multiple modifiers" do

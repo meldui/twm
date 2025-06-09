@@ -429,8 +429,9 @@ defmodule Twm.Config.Default do
       bg: [%{bg: scale_color()}],
 
       # Typography
-      "font-size": [%{"font-size": ["xs", "sm", "base", "lg", "xl", &Twm.is_arbitrary_value/1]}],
+      "font-size": [%{text: ["xs", "sm", "base", "lg", "xl", &Twm.is_arbitrary_value/1]}],
       "font-weight": [%{font: ["thin", "extralight", "light", "normal", "medium", "semibold", "bold", "extrabold", "black"]}],
+      leading: [%{leading: [&Twm.is_number/1, &Twm.is_arbitrary_value/1, theme_leading()]}],
       text: [%{text: theme_text()}],
       "text-decoration": ["underline", "overline", "line-through", "no-underline"],
       "text-decoration-style": [%{decoration: ["solid", "double", "dotted", "dashed", "wavy"]}],
@@ -527,7 +528,7 @@ defmodule Twm.Config.Default do
 
   defp conflicting_class_group_modifiers do
     %{
-      # No conflicting class group modifiers yet
+      leading: ["font-size"]
     }
   end
 
