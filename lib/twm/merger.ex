@@ -7,6 +7,7 @@ defmodule Twm.Merger do
   """
 
   alias Twm.ClassGroupUtils
+  alias Twm.Parser.ClassName
 
   @doc """
   Merges Tailwind CSS classes based on the provided configuration.
@@ -31,46 +32,58 @@ defmodule Twm.Merger do
       ""
     else
       class_list = String.split(classes, ~r/\s+/, trim: true)
-      
+
       # Create class group utilities for the config
       class_utils = ClassGroupUtils.create_class_group_utils(config)
-      
+
+      # Create class name parser for the config
+      parse_class_name = ClassName.create_parse_class_name(config)
+
       # Parse classes and merge conflicts
-      merge_class_list(class_list, class_utils)
+      merge_class_list(class_list, class_utils, parse_class_name)
     end
   end
 
   # Merge a list of classes using the class utilities
-  defp merge_class_list(class_list, class_utils) do
+  defp merge_class_list(class_list, class_utils, parse_class_name) do
     # Parse each class and track conflicts
-    parsed_classes = Enum.map(class_list, &parse_class_with_modifiers(&1, class_utils))
-    
+    parsed_classes =
+      Enum.map(class_list, &parse_class_with_modifiers(&1, class_utils, parse_class_name))
+
     # Group by conflict keys and handle conflicting class groups
-    result_map = 
+    result_map =
       parsed_classes
       |> Enum.with_index()
       |> Enum.reduce(%{}, fn {{class, parsed_info}, index}, acc ->
         class_group_id = parsed_info.class_group_id
         modifiers = parsed_info.modifiers
         important = parsed_info.important
-        
+
         # Create the primary conflict key for this class
         conflict_key = get_conflict_key(parsed_info, class_utils)
-        
+
         # Get all conflicting class group IDs
-        conflicting_groups = if class_group_id do
-          class_utils.get_conflicting_class_group_ids.(class_group_id, false)
-        else
-          []
-        end
-        
+        conflicting_groups =
+          if class_group_id do
+            class_utils.get_conflicting_class_group_ids.(class_group_id, false)
+          else
+            []
+          end
+
         # Remove any existing classes that conflict with this one
-        updated_acc = remove_conflicting_classes(acc, class_group_id, conflicting_groups, modifiers, important)
-        
+        updated_acc =
+          remove_conflicting_classes(
+            acc,
+            class_group_id,
+            conflicting_groups,
+            modifiers,
+            important
+          )
+
         # Add this class to the map
         Map.put(updated_acc, conflict_key, {class, index, parsed_info})
       end)
-    
+
     # Sort by original index to maintain order and extract classes
     result_map
     |> Map.values()
@@ -80,79 +93,97 @@ defmodule Twm.Merger do
   end
 
   # Parse a class with its modifiers and important flag
-  defp parse_class_with_modifiers(class, class_utils) do
-    {important, base_class} = extract_important(class)
-    {modifiers, class_name} = extract_modifiers(base_class)
-    
-    class_group_id = class_utils.get_class_group_id.(class_name)
-    
-    parsed_info = %{
-      class_group_id: class_group_id,
-      modifiers: modifiers,
-      important: important,
-      base_class: class_name
-    }
-    
-    {class, parsed_info}
-  end
+  defp parse_class_with_modifiers(class, class_utils, parse_class_name) do
+    # First, try to get the class group ID from the original class
+    original_class_group_id = class_utils.get_class_group_id.(class)
 
-  # Extract important flag from class
-  defp extract_important("!" <> class), do: {true, class}
-  defp extract_important(class), do: {false, class}
+    # Use the experimental parser if available, otherwise fall back to basic parsing
+    parsed_class_name = parse_class_name.(class)
 
-  # Extract modifiers from class using proper parsing to handle arbitrary variants
-  # Examples: 
-  # - "hover:[paint-order:normal]" -> {["hover"], "[paint-order:normal]"}
-  # - "[paint-order:markers]" -> {[], "[paint-order:markers]"}
-  # - "hover:focus:px-4" -> {["hover", "focus"], "px-4"}
-  # - "[&>*]:underline" -> {["[&>*]"], "underline"}
-  # - "dark:lg:hover:[&>*]:underline" -> {["dark", "lg", "hover", "[&>*]"], "underline"}
-  defp extract_modifiers(class) do
-    parse_modifiers(class, [], 0, 0, 0, "")
-  end
+    # Check if we're using an experimental parser by comparing with basic parsing
+    basic_parsed = ClassName.do_parse_class_name(class)
+    using_experimental_parser = parsed_class_name != basic_parsed
 
-  # Parse modifiers while respecting bracket depth for arbitrary variants
-  defp parse_modifiers(class, modifiers, index, bracket_depth, paren_depth, current_part) when index < byte_size(class) do
-    char = String.at(class, index)
-    
-    cond do
-      # Handle colon separator when not inside brackets or parentheses
-      char == ":" && bracket_depth == 0 && paren_depth == 0 ->
-        if current_part != "" do
-          parse_modifiers(class, modifiers ++ [current_part], index + 1, bracket_depth, paren_depth, "")
-        else
-          parse_modifiers(class, modifiers, index + 1, bracket_depth, paren_depth, "")
-        end
-      
-      # Handle opening bracket
-      char == "[" ->
-        parse_modifiers(class, modifiers, index + 1, bracket_depth + 1, paren_depth, current_part <> char)
-      
-      # Handle closing bracket
-      char == "]" ->
-        parse_modifiers(class, modifiers, index + 1, bracket_depth - 1, paren_depth, current_part <> char)
-      
-      # Handle opening parenthesis
-      char == "(" ->
-        parse_modifiers(class, modifiers, index + 1, bracket_depth, paren_depth + 1, current_part <> char)
-      
-      # Handle closing parenthesis
-      char == ")" ->
-        parse_modifiers(class, modifiers, index + 1, bracket_depth, paren_depth - 1, current_part <> char)
-      
-      # Handle any other character
-      true ->
-        parse_modifiers(class, modifiers, index + 1, bracket_depth, paren_depth, current_part <> char)
-    end
-  end
+    # Handle external classes
+    if Map.get(parsed_class_name, :is_external, false) do
+      # For external classes, use the original class name as-is
+      parsed_info = %{
+        class_group_id: nil,
+        modifiers: [],
+        important: false,
+        base_class: class,
+        original_class: class
+      }
 
-  # Base case: end of string
-  defp parse_modifiers(_class, modifiers, _index, _bracket_depth, _paren_depth, current_part) do
-    if current_part != "" do
-      {modifiers, current_part}
+      {class, parsed_info}
     else
-      {modifiers, ""}
+      modifiers = Map.get(parsed_class_name, :modifiers, [])
+      important = Map.get(parsed_class_name, :has_important_modifier, false)
+      base_class = Map.get(parsed_class_name, :base_class_name, class)
+
+      # Get class group ID based on the base class (which may have been transformed)
+      transformed_class_group_id = class_utils.get_class_group_id.(base_class)
+
+      # Use original class group ID if the transformed class isn't recognized
+      # This preserves conflict resolution for experimental parsers
+      class_group_id =
+        if transformed_class_group_id do
+          transformed_class_group_id
+        else
+          original_class_group_id
+        end
+
+      # Determine output class name based on experimental parser behavior
+      output_class =
+        if using_experimental_parser do
+          # Check if the experimental parser made meaningful transformations
+          base_class_changed = base_class != class
+          important_changed = important != basic_parsed.has_important_modifier
+
+          # For modifiers, check if any new modifiers were added or removed
+          # (don't care about order since that's handled by conflict resolution)
+          original_modifier_set = MapSet.new(basic_parsed.modifiers)
+          new_modifier_set = MapSet.new(modifiers)
+          modifiers_changed = original_modifier_set != new_modifier_set
+
+          parser_transformed = base_class_changed or important_changed or modifiers_changed
+
+          if parser_transformed do
+            # Experimental parser transformed the class - use the transformed result
+            reconstruct_class_name(modifiers, base_class, important)
+          else
+            # No transformation - use original class
+            class
+          end
+        else
+          # No experimental parser - use original class
+          class
+        end
+
+      parsed_info = %{
+        class_group_id: class_group_id,
+        modifiers: modifiers,
+        important: important,
+        base_class: base_class,
+        original_class: class
+      }
+
+      {output_class, parsed_info}
     end
+  end
+
+  # Reconstruct a class name from its parsed components
+  defp reconstruct_class_name(modifiers, base_class, important) do
+    modifier_prefix =
+      if Enum.empty?(modifiers) do
+        ""
+      else
+        Enum.join(modifiers, ":") <> ":"
+      end
+
+    important_prefix = if important, do: "!", else: ""
+
+    important_prefix <> modifier_prefix <> base_class
   end
 
   # Remove conflicting classes from the accumulator
@@ -162,13 +193,14 @@ defmodule Twm.Merger do
         existing_group_id = parsed_info.class_group_id
         existing_modifiers = parsed_info.modifiers
         existing_important = parsed_info.important
-        
+
         # Check if this existing class conflicts with the new one
-        should_remove = existing_group_id && 
-                       existing_modifiers == modifiers && 
-                       existing_important == important &&
-                       (existing_group_id in conflicting_groups || existing_group_id == class_group_id)
-        
+        should_remove =
+          existing_group_id &&
+            existing_modifiers == modifiers &&
+            existing_important == important &&
+            (existing_group_id in conflicting_groups || existing_group_id == class_group_id)
+
         if should_remove do
           new_acc
         else
@@ -187,14 +219,21 @@ defmodule Twm.Merger do
       modifiers: modifiers,
       important: important
     } = parsed_info
-    
-    # For classes without a group (like malformed ones), use the base class as key
-    base_key = class_group_id || parsed_info.base_class
-    
+
+    # For experimental parser results with same base class, use base class as conflict key
+    # This ensures that multiple instances of the same transformed class conflict
+    base_key =
+      if class_group_id do
+        class_group_id
+      else
+        # For unrecognized classes, use the base class name to ensure conflicts
+        parsed_info.base_class
+      end
+
     # Sort modifiers but preserve position of arbitrary variants (those starting with [)
     sorted_modifiers = sort_modifiers_preserving_arbitrary_variants(modifiers)
     modifier_key = Enum.join(sorted_modifiers, ":")
-    
+
     case {modifier_key, important} do
       {"", false} -> base_key
       {"", true} -> "!#{base_key}"
@@ -206,7 +245,7 @@ defmodule Twm.Merger do
   # Sort modifiers while preserving the position of arbitrary variants
   # Arbitrary variants (starting with [) are position-sensitive
   defp sort_modifiers_preserving_arbitrary_variants(modifiers) do
-    {sorted, unsorted} = 
+    {sorted, unsorted} =
       Enum.reduce(modifiers, {[], []}, fn modifier, {sorted_acc, unsorted_acc} ->
         if String.starts_with?(modifier, "[") do
           # Arbitrary variant - preserve position by flushing unsorted and adding this one
@@ -216,7 +255,7 @@ defmodule Twm.Merger do
           {sorted_acc, unsorted_acc ++ [modifier]}
         end
       end)
-    
+
     # Add any remaining unsorted modifiers
     sorted ++ Enum.sort(unsorted)
   end

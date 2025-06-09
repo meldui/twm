@@ -184,7 +184,9 @@ defmodule Twm.ClassGroupUtilsTest do
         class_groups: %{
           display: ["block", "inline", "flex", "grid"],
           spacing: ["p-1", "p-2", "m-1", "m-2"],
-          colors: [fn value -> String.ends_with?(value, "-500") end],
+          colors: [
+            fn value -> String.ends_with?(value, "-500") end
+          ],
           layout: [
             %{
               "w" => ["full", "1/2", "1/3"],

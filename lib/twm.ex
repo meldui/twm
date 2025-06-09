@@ -79,7 +79,7 @@ defmodule Twm do
   defp do_merge(classes) when is_binary(classes) do
     # Get config from the application environment or use default
     config = Application.get_env(:twm, :config, Twm.Config.get_default())
-    
+
     # Use the proper merger implementation
     Twm.Merger.merge_classes(classes, config)
   end
@@ -127,5 +127,55 @@ defmodule Twm do
 
   def create_tailwind_merge(config_fn) when is_function(config_fn, 0) do
     Create.tailwind_merge(config_fn)
+  end
+
+  @doc """
+  Extends the default tailwind merge function with the provided configuration options.
+
+  This function creates a custom tailwind merge function by extending the default
+  configuration with the provided options.
+
+  ## Examples
+
+      iex> custom_merge = Twm.extend_tailwind_merge(
+      ...>   experimental_parse_class_name: fn %{class_name: class_name, parse_class_name: parse_class_name} ->
+      ...>     parse_class_name.(String.slice(class_name, 3..-1//1))
+      ...>   end
+      ...> )
+      iex> custom_merge.("barpx-2 foopy-1 lolp-3")
+      "p-3"
+
+  """
+  @spec extend_tailwind_merge(keyword() | map()) :: (String.t() -> String.t())
+  def extend_tailwind_merge(options) when is_list(options) or is_map(options) do
+    # Convert keyword list to map if necessary
+    config_override = if is_list(options), do: Map.new(options), else: options
+
+    # Create a custom merge function with the extended configuration
+    fn classes ->
+      # Get the default config and merge with overrides
+      config =
+        Twm.Config.get_default()
+        |> Map.merge(config_override)
+
+      # Perform the merge with the custom config
+      if is_binary(classes) do
+        merge_with_config(classes, config)
+      else
+        classes
+        |> List.wrap()
+        |> Enum.join(" ")
+        |> merge_with_config(config)
+      end
+    end
+  end
+
+  # Private helper to merge classes with a specific configuration
+  defp merge_with_config(classes, config) when is_binary(classes) do
+    if classes == "" do
+      ""
+    else
+      Twm.Merger.merge_classes(classes, config)
+    end
   end
 end

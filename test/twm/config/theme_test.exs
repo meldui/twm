@@ -8,7 +8,7 @@ defmodule Twm.Config.ThemeTest do
   describe "from_theme/1" do
     test "returns a ThemeGetter struct for string keys" do
       theme_getter = Theme.from_theme("spacing")
-      
+
       assert %Theme.ThemeGetter{} = theme_getter
       assert theme_getter.key == :spacing
       assert theme_getter.is_theme_getter == true
@@ -17,7 +17,7 @@ defmodule Twm.Config.ThemeTest do
 
     test "returns a ThemeGetter struct for atom keys" do
       theme_getter = Theme.from_theme(:color)
-      
+
       assert %Theme.ThemeGetter{} = theme_getter
       assert theme_getter.key == :color
       assert theme_getter.is_theme_getter == true
@@ -39,7 +39,7 @@ defmodule Twm.Config.ThemeTest do
     test "extracts values from theme config for existing keys" do
       theme_getter = Theme.from_theme(:spacing)
       theme_config = %{spacing: ["1", "2", "4", "8"]}
-      
+
       result = Theme.call_theme_getter(theme_getter, theme_config)
       assert result == ["1", "2", "4", "8"]
     end
@@ -47,14 +47,14 @@ defmodule Twm.Config.ThemeTest do
     test "returns empty list for missing keys" do
       theme_getter = Theme.from_theme(:missing)
       theme_config = %{spacing: ["1", "2", "4"]}
-      
+
       result = Theme.call_theme_getter(theme_getter, theme_config)
       assert result == []
     end
 
     test "handles nil theme config" do
       theme_getter = Theme.from_theme(:spacing)
-      
+
       result = Theme.call_theme_getter(theme_getter, %{})
       assert result == []
     end
@@ -62,7 +62,7 @@ defmodule Twm.Config.ThemeTest do
     test "converts non-list values to lists" do
       theme_getter = Theme.from_theme(:single_value)
       theme_config = %{single_value: "only-value"}
-      
+
       result = Theme.call_theme_getter(theme_getter, theme_config)
       assert result == ["only-value"]
     end
@@ -70,13 +70,14 @@ defmodule Twm.Config.ThemeTest do
     test "works with regular functions for backwards compatibility" do
       regular_func = fn theme_config -> Map.get(theme_config, :test, []) end
       theme_config = %{test: ["value1", "value2"]}
-      
+
       result = Theme.call_theme_getter(regular_func, theme_config)
       assert result == ["value1", "value2"]
     end
 
     test "handles complex theme configurations" do
       theme_getter = Theme.from_theme(:color)
+
       theme_config = %{
         color: [
           "transparent",
@@ -87,7 +88,7 @@ defmodule Twm.Config.ThemeTest do
           %{"red" => ["500", "600", "700"]}
         ]
       }
-      
+
       result = Theme.call_theme_getter(theme_getter, theme_config)
       assert length(result) == 6
       assert "transparent" in result
@@ -143,7 +144,7 @@ defmodule Twm.Config.ThemeTest do
         ease: ["linear", "in", "out"],
         animate: ["none", "spin", "pulse"]
       }
-      
+
       {:ok, theme_config: theme_config}
     end
 
@@ -244,7 +245,7 @@ defmodule Twm.Config.ThemeTest do
 
     test "convenience functions handle missing keys gracefully" do
       empty_config = %{}
-      
+
       assert Theme.spacing(empty_config) == []
       assert Theme.color(empty_config) == []
       assert Theme.font(empty_config) == []
@@ -257,23 +258,23 @@ defmodule Twm.Config.ThemeTest do
     test "theme getters work in class group definitions" do
       # This test ensures that the theme getters can be used in the actual
       # configuration and that the theme_getter?/1 function correctly identifies them
-      
+
       theme_spacing = Theme.from_theme(:spacing)
       theme_color = Theme.from_theme(:color)
-      
+
       # These should be identified as theme getters
       assert Theme.theme_getter?(theme_spacing) == true
       assert Theme.theme_getter?(theme_color) == true
-      
+
       # Test that they can be called
       theme_config = %{
         spacing: ["1", "2", "4"],
         color: ["red", "blue"]
       }
-      
+
       spacing_result = Theme.call_theme_getter(theme_spacing, theme_config)
       color_result = Theme.call_theme_getter(theme_color, theme_config)
-      
+
       assert spacing_result == ["1", "2", "4"]
       assert color_result == ["red", "blue"]
     end
@@ -281,13 +282,13 @@ defmodule Twm.Config.ThemeTest do
     test "theme getters can be mixed with other class definitions" do
       # This simulates how theme getters would be used in a real class group
       theme_spacing = Theme.from_theme(:spacing)
-      
+
       class_definitions = [
         "auto",
         "full",
         theme_spacing
       ]
-      
+
       # Verify the structure
       assert length(class_definitions) == 3
       assert "auto" in class_definitions
@@ -299,7 +300,7 @@ defmodule Twm.Config.ThemeTest do
   describe "error handling" do
     test "handles invalid theme configurations gracefully" do
       theme_getter = Theme.from_theme(:spacing)
-      
+
       # Test with various invalid configurations
       assert Theme.call_theme_getter(theme_getter, nil) == []
       assert Theme.call_theme_getter(theme_getter, "not a map") == []
@@ -320,15 +321,15 @@ defmodule Twm.Config.ThemeTest do
     test "mimics TypeScript fromTheme behavior" do
       # Test that our implementation behaves like the TypeScript version
       theme_getter = Theme.from_theme("spacing")
-      
+
       # Should be identified as a theme getter (equivalent to isThemeGetter: true)
       assert Theme.theme_getter?(theme_getter) == true
-      
+
       # Should extract values from theme config
       theme_config = %{spacing: ["hello"]}
       result = Theme.call_theme_getter(theme_getter, theme_config)
       assert result == ["hello"]
-      
+
       # Should return empty array for missing keys
       empty_result = Theme.call_theme_getter(theme_getter, %{})
       assert empty_result == []
@@ -338,9 +339,9 @@ defmodule Twm.Config.ThemeTest do
       # In TypeScript: fromTheme<string>('foo')
       # In Elixir: Theme.from_theme(:foo)
       custom_theme_getter = Theme.from_theme(:foo)
-      
+
       assert Theme.theme_getter?(custom_theme_getter) == true
-      
+
       theme_config = %{foo: ["hello"]}
       result = Theme.call_theme_getter(custom_theme_getter, theme_config)
       assert result == ["hello"]

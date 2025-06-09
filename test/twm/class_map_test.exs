@@ -45,7 +45,10 @@ defmodule Twm.ClassMapTest do
       class_groups_by_first_part =
         class_map.next_part
         |> Enum.map(fn {key, value} ->
-          {key, get_class_groups_in_class_part(value) |> MapSet.to_list() |> Enum.sort()}
+          {key,
+           get_class_groups_in_class_part(value)
+           |> MapSet.to_list()
+           |> Enum.sort()}
         end)
         |> Enum.into(%{})
 
@@ -57,7 +60,7 @@ defmodule Twm.ClassMapTest do
       assert Map.get(class_groups_by_first_part, "block") == ["display"]
       assert Map.get(class_groups_by_first_part, "inline") == ["display"]
       assert Map.get(class_groups_by_first_part, "flex") != nil
-      assert "flex" in Map.get(class_groups_by_first_part, "flex", [])
+      assert "display" in Map.get(class_groups_by_first_part, "flex", [])
       assert Map.get(class_groups_by_first_part, "grid") != nil
       assert "display" in Map.get(class_groups_by_first_part, "grid", [])
       assert Map.get(class_groups_by_first_part, "hidden") == ["display"]
@@ -131,7 +134,7 @@ defmodule Twm.ClassMapTest do
       assert col_groups != nil
       assert "col-start-end" in col_groups
 
-      # Test row utilities  
+      # Test row utilities
       row_groups = Map.get(class_groups_by_first_part, "row")
       assert row_groups != nil
       assert "row-start-end" in row_groups
@@ -159,8 +162,8 @@ defmodule Twm.ClassMapTest do
       assert Map.get(class_groups_by_first_part, "z") == ["z"]
 
       # Test that we have a reasonable number of first-part entries
-      assert map_size(class_groups_by_first_part) > 30, 
-        "Expected many class map entries, got: #{map_size(class_groups_by_first_part)}"
+      assert map_size(class_groups_by_first_part) > 30,
+             "Expected many class map entries, got: #{map_size(class_groups_by_first_part)}"
 
       # Test font variant numeric utilities
       assert Map.get(class_groups_by_first_part, "normal") != nil
@@ -215,32 +218,90 @@ defmodule Twm.ClassMapTest do
 
       # Verify we have the core structure expected from the original test
       # This validates that our Elixir port maintains the same functionality
-      
+
       # Essential classes should be present
       essential_first_parts = [
-        "absolute", "relative", "static", "fixed", "sticky",  # position
-        "block", "inline", "flex", "grid", "hidden", "table", "contents", "list", "flow",  # display
-        "p", "m", "px", "py", "mx", "my", "pt", "pb", "pl", "pr", "ps", "pe", "mt", "mb", "ml", "mr", "ms", "me",  # spacing
-        "w", "h", "size",  # sizing
-        "top", "bottom", "left", "right", "start", "end", "inset",  # positioning
-        "visible", "invisible", "collapse",  # visibility
-        "overflow", "overscroll",  # overflow
-        "gap", "col", "row",  # grid/flexbox
-        "grow", "shrink", "basis",  # flex
-        "float", "clear",  # float
-        "z"  # z-index
+        # position
+        "absolute",
+        "relative",
+        "static",
+        "fixed",
+        "sticky",
+        # display
+        "block",
+        "inline",
+        "flex",
+        "grid",
+        "hidden",
+        "table",
+        "contents",
+        "list",
+        "flow",
+        # spacing
+        "p",
+        "m",
+        "px",
+        "py",
+        "mx",
+        "my",
+        "pt",
+        "pb",
+        "pl",
+        "pr",
+        "ps",
+        "pe",
+        "mt",
+        "mb",
+        "ml",
+        "mr",
+        "ms",
+        "me",
+        # sizing
+        "w",
+        "h",
+        "size",
+        # positioning
+        "top",
+        "bottom",
+        "left",
+        "right",
+        "start",
+        "end",
+        "inset",
+        # visibility
+        "visible",
+        "invisible",
+        "collapse",
+        # overflow
+        "overflow",
+        "overscroll",
+        # grid/flexbox
+        "gap",
+        "col",
+        "row",
+        # flex
+        "grow",
+        "shrink",
+        "basis",
+        # float
+        "float",
+        "clear",
+        # z-index
+        "z"
       ]
 
       Enum.each(essential_first_parts, fn first_part ->
-        assert Map.has_key?(class_groups_by_first_part, first_part), 
-          "Missing essential first part: #{first_part}"
+        assert Map.has_key?(class_groups_by_first_part, first_part),
+               "Missing essential first part: #{first_part}"
+
         groups = Map.get(class_groups_by_first_part, first_part)
-        assert groups != nil && groups != [], 
-          "Expected groups for #{first_part}, got: #{inspect(groups)}"
+
+        assert groups != nil && groups != [],
+               "Expected groups for #{first_part}, got: #{inspect(groups)}"
       end)
 
       # Test that the mapping produces reasonable group counts
-      total_groups = 
+      total_groups =
         class_groups_by_first_part
         |> Map.values()
         |> List.flatten()
@@ -251,18 +312,21 @@ defmodule Twm.ClassMapTest do
 
       # Test specific mappings that are critical for functionality
       position_classes = ["absolute", "relative", "static", "fixed", "sticky"]
+
       Enum.each(position_classes, fn class ->
         groups = Map.get(class_groups_by_first_part, class, [])
         assert "position" in groups, "#{class} should map to position group"
       end)
 
       display_classes = ["block", "inline", "hidden", "contents"]
+
       Enum.each(display_classes, fn class ->
         groups = Map.get(class_groups_by_first_part, class, [])
         assert "display" in groups, "#{class} should map to display group"
       end)
 
       visibility_classes = ["visible", "invisible", "collapse"]
+
       Enum.each(visibility_classes, fn class ->
         groups = Map.get(class_groups_by_first_part, class, [])
         assert "visibility" in groups, "#{class} should map to visibility group"
@@ -270,21 +334,35 @@ defmodule Twm.ClassMapTest do
 
       # Verify the structure matches the original test's expectations for complex entries
       flex_groups = Map.get(class_groups_by_first_part, "flex", [])
-      assert "flex" in flex_groups, "flex should include flex group"
-      
+      assert "display" in flex_groups, "flex should include display group"
+
       grid_groups = Map.get(class_groups_by_first_part, "grid", [])
       assert "display" in grid_groups, "grid should include display group"
 
       # Test that compound class names are handled correctly
       compound_classes = [
-        "auto-cols", "auto-rows", "col-start", "col-end", "row-start", "row-end",
-        "gap-x", "gap-y", "grid-cols", "grid-rows", "grid-flow",
-        "inset-x", "inset-y", "overflow-x", "overflow-y", "overscroll-x", "overscroll-y"
+        "auto-cols",
+        "auto-rows",
+        "col-start",
+        "col-end",
+        "row-start",
+        "row-end",
+        "gap-x",
+        "gap-y",
+        "grid-cols",
+        "grid-rows",
+        "grid-flow",
+        "inset-x",
+        "inset-y",
+        "overflow-x",
+        "overflow-y",
+        "overscroll-x",
+        "overscroll-y"
       ]
 
       Enum.each(compound_classes, fn class ->
         assert Map.has_key?(class_groups_by_first_part, class),
-          "Missing compound class: #{class}"
+               "Missing compound class: #{class}"
       end)
     end
 

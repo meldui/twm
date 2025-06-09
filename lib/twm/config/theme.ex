@@ -9,23 +9,23 @@ defmodule Twm.Config.Theme do
   defmodule ThemeGetter do
     @moduledoc """
     A struct that wraps a theme getter function and marks it as such.
-    
+
     This is equivalent to the `isThemeGetter` property in the TypeScript version.
     """
-    
+
     @enforce_keys [:key, :getter_fn]
     defstruct [:key, :getter_fn, is_theme_getter: true]
-    
+
     @type t :: %__MODULE__{
-      key: String.t() | atom(),
-      getter_fn: (map() -> list()),
-      is_theme_getter: true
-    }
+            key: String.t() | atom(),
+            getter_fn: (map() -> list()),
+            is_theme_getter: true
+          }
   end
 
   @doc """
   Creates a theme getter function for the specified theme key.
-  
+
   This is the Elixir equivalent of the TypeScript `fromTheme` function.
   Returns a `ThemeGetter` struct that can be identified as a theme getter
   and called to extract theme values.
@@ -70,7 +70,9 @@ defmodule Twm.Config.Theme do
   def from_theme(theme_key) when is_atom(theme_key) do
     getter_fn = fn theme_config ->
       case theme_config do
-        nil -> []
+        nil ->
+          []
+
         config when is_map(config) ->
           case Map.get(config, theme_key) do
             nil -> []
@@ -78,7 +80,9 @@ defmodule Twm.Config.Theme do
             value when is_map(value) -> Map.keys(value)
             value -> [value]
           end
-        _ -> []
+
+        _ ->
+          []
       end
     end
 
@@ -91,7 +95,7 @@ defmodule Twm.Config.Theme do
 
   @doc """
   Calls a theme getter function with the provided theme configuration.
-  
+
   This function handles both `ThemeGetter` structs and regular functions
   for backwards compatibility.
 
@@ -120,7 +124,7 @@ defmodule Twm.Config.Theme do
 
   @doc """
   Checks if a value is a theme getter.
-  
+
   ## Examples
 
       iex> theme_spacing = Twm.Config.Theme.from_theme(:spacing)

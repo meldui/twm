@@ -26,8 +26,13 @@ defmodule Twm.ConflictsAcrossClassGroupsTest do
     assert merge("touch-pan-x touch-pan-right") == "touch-pan-right"
     assert merge("touch-none touch-pan-x") == "touch-pan-x"
     assert merge("touch-pan-x touch-none") == "touch-none"
-    assert merge("touch-pan-x touch-pan-y touch-pinch-zoom") == "touch-pan-x touch-pan-y touch-pinch-zoom"
-    assert merge("touch-manipulation touch-pan-x touch-pan-y touch-pinch-zoom") == "touch-pan-x touch-pan-y touch-pinch-zoom"
+
+    assert merge("touch-pan-x touch-pan-y touch-pinch-zoom") ==
+             "touch-pan-x touch-pan-y touch-pinch-zoom"
+
+    assert merge("touch-manipulation touch-pan-x touch-pan-y touch-pinch-zoom") ==
+             "touch-pan-x touch-pan-y touch-pinch-zoom"
+
     assert merge("touch-pan-x touch-pan-y touch-pinch-zoom touch-auto") == "touch-auto"
   end
 

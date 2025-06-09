@@ -99,7 +99,7 @@ defmodule Twm.Config.Default do
   defp scale_align_primary_axis do
     [
       "start",
-      "end", 
+      "end",
       "center",
       "between",
       "around",
@@ -141,7 +141,9 @@ defmodule Twm.Config.Default do
   end
 
   defp scale_bg_position do
-    scale_position() ++ [&Twm.is_arbitrary_variable_position/1, &Twm.is_arbitrary_position/1] ++ [%{position: [&Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]}]
+    scale_position() ++
+      [&Twm.is_arbitrary_variable_position/1, &Twm.is_arbitrary_position/1] ++
+      [%{position: [&Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]}]
   end
 
   defp scale_bg_repeat do
@@ -205,7 +207,12 @@ defmodule Twm.Config.Default do
   end
 
   defp scale_mask_image_position do
-    [&Twm.is_number/1, &Twm.is_percent/1, &Twm.is_arbitrary_variable_position/1, &Twm.is_arbitrary_position/1]
+    [
+      &Twm.is_number/1,
+      &Twm.is_percent/1,
+      &Twm.is_arbitrary_variable_position/1,
+      &Twm.is_arbitrary_position/1
+    ]
   end
 
   defp scale_blur do
@@ -264,7 +271,9 @@ defmodule Twm.Config.Default do
   defp scale_grid_col_row_start_and_end do
     [
       "auto",
-      %{span: ["full", &Twm.is_integer/1, &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]},
+      %{
+        span: ["full", &Twm.is_integer/1, &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]
+      },
       &Twm.is_integer/1,
       &Twm.is_arbitrary_variable/1,
       &Twm.is_arbitrary_value/1
@@ -285,7 +294,7 @@ defmodule Twm.Config.Default do
       font: [&Twm.is_any_non_arbitrary/1],
       font_weight: [
         "thin",
-        "extralight", 
+        "extralight",
         "light",
         "normal",
         "medium",
@@ -308,30 +317,7 @@ defmodule Twm.Config.Default do
 
   defp class_groups do
     %{
-      # Layout
-      display: [
-        "block",
-        "inline-block",
-        "inline",
-        "flex",
-        "inline-flex",
-        "table",
-        "inline-table",
-        "table-caption",
-        "table-cell",
-        "table-column",
-        "table-column-group",
-        "table-footer-group",
-        "table-header-group",
-        "table-row-group",
-        "table-row",
-        "flow-root",
-        "grid",
-        "inline-grid",
-        "contents",
-        "list-item",
-        "hidden"
-      ],
+      # Layout (position, inset, visibility, z-index)
       position: ["static", "fixed", "absolute", "relative", "sticky"],
       float: [%{float: ["right", "left", "none", "start", "end"]}],
       clear: [%{clear: ["left", "right", "both", "none", "start", "end"]}],
@@ -356,7 +342,13 @@ defmodule Twm.Config.Default do
       "overscroll-y": [%{"overscroll-y": scale_overscroll()}],
 
       # Flexbox and Grid
-      flex: [%{flex: [&Twm.is_number/1, &Twm.is_fraction/1, "auto", "initial", "none", &Twm.is_arbitrary_value/1]}],
+      "flex-grow-shrink": [
+        "flex-1",
+        "flex-auto",
+        "flex-initial",
+        "flex-none",
+        %{flex: [&Twm.is_number/1, &Twm.is_fraction/1, &Twm.is_arbitrary_value/1]}
+      ],
       "flex-direction": [%{flex: ["row", "row-reverse", "col", "col-reverse"]}],
       "flex-wrap": [%{flex: ["nowrap", "wrap", "wrap-reverse"]}],
       grow: [%{grow: ["0", "1", &Twm.is_arbitrary_value/1]}],
@@ -375,6 +367,31 @@ defmodule Twm.Config.Default do
       "row-end": [%{"row-end": scale_grid_col_row_start_or_end()}],
       "auto-cols": [%{"auto-cols": scale_grid_auto_cols_rows()}],
       "auto-rows": [%{"auto-rows": scale_grid_auto_cols_rows()}],
+
+      # Display (moved after flex groups to prevent override)
+      display: [
+        "block",
+        "inline-block",
+        "inline",
+        "flex",
+        "inline-flex",
+        "table",
+        "inline-table",
+        "table-caption",
+        "table-cell",
+        "table-column",
+        "table-column-group",
+        "table-footer-group",
+        "table-header-group",
+        "table-row-group",
+        "table-row",
+        "flow-root",
+        "grid",
+        "inline-grid",
+        "contents",
+        "list-item",
+        "hidden"
+      ],
 
       # Spacing
       gap: [%{gap: scale_unambiguous_spacing()}],
@@ -413,6 +430,15 @@ defmodule Twm.Config.Default do
 
       # Typography
       "font-size": [%{"font-size": ["xs", "sm", "base", "lg", "xl", &Twm.is_arbitrary_value/1]}],
+      text: [%{text: theme_text()}],
+      "text-decoration": ["underline", "overline", "line-through", "no-underline"],
+      "text-decoration-style": [%{decoration: ["solid", "double", "dotted", "dashed", "wavy"]}],
+      "text-decoration-thickness": [
+        %{decoration: ["auto", "from-font", "0", "1", "2", "4", "8", &Twm.is_arbitrary_value/1]}
+      ],
+      "text-underline-offset": [
+        %{"underline-offset": ["auto", "0", "1", "2", "4", "8", &Twm.is_arbitrary_value/1]}
+      ],
 
       # Content
       content: [%{content: ["none", &Twm.is_arbitrary_value/1]}],
@@ -426,7 +452,9 @@ defmodule Twm.Config.Default do
       "fvn-fraction": ["diagonal-fractions", "stacked-fractions"],
 
       # Effects
-      shadow: [%{shadow: ["", "sm", "md", "lg", "xl", "2xl", "inner", "none", &Twm.is_arbitrary_value/1]}],
+      shadow: [
+        %{shadow: ["", "sm", "md", "lg", "xl", "2xl", "inner", "none", &Twm.is_arbitrary_value/1]}
+      ],
       ring: [%{ring: ["", "0", "1", "2", "4", "8", &Twm.is_arbitrary_value/1]}],
 
       # Interactivity
@@ -447,7 +475,12 @@ defmodule Twm.Config.Default do
       inset: ["inset-x", "inset-y", "start", "end", "top", "right", "bottom", "left"],
       "inset-x": ["right", "left"],
       "inset-y": ["top", "bottom"],
-      flex: ["basis", "grow", "shrink"],
+      display: ["flex-grow-shrink", "grid-cols", "grid-rows", "auto-cols", "auto-rows"],
+      "flex-grow-shrink": ["basis", "grow", "shrink", "display"],
+      "grid-cols": ["display"],
+      "grid-rows": ["display"],
+      "auto-cols": ["display"],
+      "auto-rows": ["display"],
       gap: ["gap-x", "gap-y"],
       p: ["px", "py", "ps", "pe", "pt", "pr", "pb", "pl"],
       px: ["pr", "pl"],
@@ -457,6 +490,7 @@ defmodule Twm.Config.Default do
       my: ["mt", "mb"],
       size: ["w", "h"],
       "font-size": ["leading"],
+      text: [],
       bg: [],
       "fvn-normal": [
         "fvn-ordinal",
@@ -470,6 +504,14 @@ defmodule Twm.Config.Default do
       "fvn-figure": ["fvn-normal"],
       "fvn-spacing": ["fvn-normal"],
       "fvn-fraction": ["fvn-normal"],
+      "text-decoration": [
+        "text-decoration-style",
+        "text-decoration-thickness",
+        "text-underline-offset"
+      ],
+      "text-decoration-style": ["text-decoration"],
+      "text-decoration-thickness": ["text-decoration"],
+      "text-underline-offset": ["text-decoration"],
       "touch-action": ["touch-pan-x", "touch-pan-y", "touch-pinch"],
       "touch-pan-x": ["touch-action"],
       "touch-pan-y": ["touch-action"],

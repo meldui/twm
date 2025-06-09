@@ -12,8 +12,8 @@ defmodule Twm.ColorsTest do
     end
 
     test "preserves different color properties with arbitrary values" do
-      assert Twm.merge("stroke-[hsl(350_80%_0%)] stroke-[10px]") == 
-             "stroke-[hsl(350_80%_0%)] stroke-[10px]"
+      assert Twm.merge("stroke-[hsl(350_80%_0%)] stroke-[10px]") ==
+               "stroke-[hsl(350_80%_0%)] stroke-[10px]"
     end
   end
 end

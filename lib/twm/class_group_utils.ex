@@ -109,15 +109,16 @@ defmodule Twm.ClassGroupUtils do
       nil ->
         # Not an arbitrary property, proceed with normal processing
         # Handle negative values like "-inset-1"
-        clean_class_name = if String.starts_with?(class_name, "-") do
-          String.slice(class_name, 1..-1//1)
-        else
-          class_name
-        end
+        clean_class_name =
+          if String.starts_with?(class_name, "-") do
+            String.slice(class_name, 1..-1//1)
+          else
+            class_name
+          end
 
         # Try to find the longest matching prefix first
         find_class_group_with_prefix_matching(clean_class_name, class_map)
-      
+
       arbitrary_group_id ->
         # It's an arbitrary property
         arbitrary_group_id
@@ -156,7 +157,7 @@ defmodule Twm.ClassGroupUtils do
   defp find_class_group_with_prefix_matching(class_name, class_map) do
     # Get all possible prefixes by splitting on dashes
     parts = String.split(class_name, @class_part_separator)
-    
+
     # Try each possible prefix length, starting from the longest
     find_longest_prefix_match(parts, class_map)
   end
@@ -166,21 +167,22 @@ defmodule Twm.ClassGroupUtils do
     find_longest_prefix_match(parts, class_map, length(parts))
   end
 
-  defp find_longest_prefix_match(_parts, _class_map, 0) do
-    nil
+  defp find_longest_prefix_match(parts, class_map, 0) do
+    # No prefix matched, check validators at root level
+    get_group_from_validators(parts, class_map)
   end
 
   defp find_longest_prefix_match(parts, class_map, prefix_length) do
     {prefix_parts, suffix_parts} = Enum.split(parts, prefix_length)
     prefix = Enum.join(prefix_parts, @class_part_separator)
-    
+
     next_part = Map.get(class_map, :next_part, %{})
-    
+
     case Map.get(next_part, prefix) do
       nil ->
         # No match for this prefix length, try shorter prefix
         find_longest_prefix_match(parts, class_map, prefix_length - 1)
-      
+
       prefix_map ->
         # Found a match for this prefix, now process the suffix
         if Enum.empty?(suffix_parts) do
@@ -259,20 +261,20 @@ defmodule Twm.ClassGroupUtils do
   defp process_class_group(class_group, class_map, class_group_id, theme)
        when is_list(class_group) do
     # Separate literal strings from validators and other definitions
-    {literals, validators_and_others} = 
-      Enum.split_with(class_group, fn item -> 
+    {literals, validators_and_others} =
+      Enum.split_with(class_group, fn item ->
         is_binary(item) and item != ""
       end)
-    
+
     # Process literals first to build the tree structure
-    class_map_with_literals = 
+    class_map_with_literals =
       Enum.reduce(literals, class_map, fn class_definition, acc ->
         add_class_definition_to_map(class_definition, acc, class_group_id, theme)
       end)
-    
+
     # Find common prefix from literals to determine where validators should go
     common_prefix = find_common_prefix(literals)
-    
+
     # Process validators and other definitions
     Enum.reduce(validators_and_others, class_map_with_literals, fn class_definition, acc ->
       if is_function(class_definition) and !theme_getter?(class_definition) do
@@ -309,7 +311,7 @@ defmodule Twm.ClassGroupUtils do
       theme_result = Twm.Config.Theme.call_theme_getter(class_definition, theme)
       process_class_group(theme_result, class_map, class_group_id, theme)
     else
-      # Regular validator function - this shouldn't happen here anymore 
+      # Regular validator function - this shouldn't happen here anymore
       # as validators are handled separately, but keep for backwards compatibility
       validator = %{
         validator: class_definition,
@@ -322,7 +324,12 @@ defmodule Twm.ClassGroupUtils do
   end
 
   # Handle ThemeGetter structs specifically
-  defp add_class_definition_to_map(%Twm.Config.Theme.ThemeGetter{} = class_definition, class_map, class_group_id, theme) do
+  defp add_class_definition_to_map(
+         %Twm.Config.Theme.ThemeGetter{} = class_definition,
+         class_map,
+         class_group_id,
+         theme
+       ) do
     # Theme getter struct - call it and process the result
     theme_result = Twm.Config.Theme.call_theme_getter(class_definition, theme)
     process_class_group(theme_result, class_map, class_group_id, theme)
@@ -335,16 +342,16 @@ defmodule Twm.ClassGroupUtils do
       # For maps like %{"overflow-x": ["auto", "hidden", ...]}, we need to handle
       # the key as a complete class prefix, not split it by dashes
       key_string = to_string(key)
-      
+
       # Add the complete key as a path in the class map
       updated_map = add_class_path_to_map(acc, key_string, nil)
-      
+
       # Get the target object at this path
       target_object = get_at_path(updated_map, key_string)
-      
+
       # Process the nested group at this location
       updated_target = process_class_group(nested_group, target_object, class_group_id, theme)
-      
+
       # Put the updated target back
       put_at_path(updated_map, key_string, updated_target)
     end)
@@ -370,14 +377,14 @@ defmodule Twm.ClassGroupUtils do
   defp add_class_path_to_map(class_map, class_path, class_group_id) do
     # For complete class prefixes (like "overflow-x"), treat as single path part
     # For class instances (like "space-x-1"), split by separator
-    path_parts = 
+    path_parts =
       if class_group_id == nil do
         # This is a prefix being added, keep as single part
         [class_path]
       else
         # This is a complete class, split normally
         parts = String.split(class_path, @class_part_separator)
-        
+
         # Handle negative classes by removing the leading empty string
         if List.first(parts) == "" and length(parts) > 1 do
           tl(parts)
@@ -391,7 +398,12 @@ defmodule Twm.ClassGroupUtils do
 
   # Recursively add path parts to the map
   defp add_path_parts_to_map(class_map, [], class_group_id) do
-    %{class_map | class_group_id: class_group_id}
+    # Always update class_group_id when provided, allowing literal strings to override patterns
+    if class_group_id do
+      %{class_map | class_group_id: class_group_id}
+    else
+      class_map
+    end
   end
 
   defp add_path_parts_to_map(class_map, [part | rest], class_group_id) do
@@ -450,17 +462,18 @@ defmodule Twm.ClassGroupUtils do
   # Find common prefix from a list of class names
   defp find_common_prefix([]), do: ""
   defp find_common_prefix([single]), do: extract_prefix(single)
+
   defp find_common_prefix(class_names) do
     # Extract prefixes and find the most common one
     prefixes = Enum.map(class_names, &extract_prefix/1)
-    
+
     # Find the most frequent prefix
     prefixes
     |> Enum.frequencies()
     |> Enum.max_by(fn {_prefix, count} -> count end, fn -> {"", 0} end)
     |> elem(0)
   end
-  
+
   # Extract prefix from a class name (everything before the first dash after the initial part)
   defp extract_prefix(class_name) do
     case String.split(class_name, @class_part_separator, parts: 2) do
@@ -468,7 +481,7 @@ defmodule Twm.ClassGroupUtils do
       [_] -> ""
     end
   end
-  
+
   # Add a validator to the appropriate level in the class map
   defp add_validator_to_map(validator_function, class_map, class_group_id, "") do
     # No common prefix, add to root level
@@ -476,20 +489,20 @@ defmodule Twm.ClassGroupUtils do
       validator: validator_function,
       class_group_id: class_group_id
     }
-    
+
     validators = Map.get(class_map, :validators, [])
     Map.put(class_map, :validators, [validator | validators])
   end
-  
+
   defp add_validator_to_map(validator_function, class_map, class_group_id, prefix) do
     # For multi-dash prefixes like "min-h", we need to follow the path structure
     # that the literal classes create: min -> h
     prefix_parts = String.split(prefix, @class_part_separator)
-    
+
     # Add validator to the deepest level that matches the literal structure
     add_validator_to_path(class_map, prefix_parts, validator_function, class_group_id)
   end
-  
+
   # Add validator following the path structure
   defp add_validator_to_path(class_map, [], validator_function, class_group_id) do
     # At the target level, add the validator
@@ -497,21 +510,21 @@ defmodule Twm.ClassGroupUtils do
       validator: validator_function,
       class_group_id: class_group_id
     }
-    
+
     validators = Map.get(class_map, :validators, [])
     Map.put(class_map, :validators, [validator | validators])
   end
-  
+
   defp add_validator_to_path(class_map, [part | rest], validator_function, class_group_id) do
     # Ensure this part exists
     updated_map = ensure_path_exists(class_map, part)
-    
+
     # Get the object at this part
     part_object = get_at_path(updated_map, part)
-    
+
     # Recursively add to the deeper level
     updated_part = add_validator_to_path(part_object, rest, validator_function, class_group_id)
-    
+
     # Put the updated part back
     put_at_path(updated_map, part, updated_part)
   end

@@ -4,24 +4,28 @@ defmodule Twm.ArbitraryPropertiesTest do
   describe "merge/1 with arbitrary properties" do
     test "handles arbitrary property conflicts correctly" do
       assert Twm.merge("[paint-order:markers] [paint-order:normal]") == "[paint-order:normal]"
-      
-      assert Twm.merge("[paint-order:markers] [--my-var:2rem] [paint-order:normal] [--my-var:4px]") ==
+
+      assert Twm.merge(
+               "[paint-order:markers] [--my-var:2rem] [paint-order:normal] [--my-var:4px]"
+             ) ==
                "[paint-order:normal] [--my-var:4px]"
     end
 
     test "handles arbitrary property conflicts with modifiers correctly" do
       assert Twm.merge("[paint-order:markers] hover:[paint-order:normal]") ==
                "[paint-order:markers] hover:[paint-order:normal]"
-      
+
       assert Twm.merge("hover:[paint-order:markers] hover:[paint-order:normal]") ==
                "hover:[paint-order:normal]"
-      
+
       assert Twm.merge("hover:focus:[paint-order:markers] focus:hover:[paint-order:normal]") ==
                "focus:hover:[paint-order:normal]"
-      
-      assert Twm.merge("[paint-order:markers] [paint-order:normal] [--my-var:2rem] lg:[--my-var:4px]") ==
+
+      assert Twm.merge(
+               "[paint-order:markers] [paint-order:normal] [--my-var:2rem] lg:[--my-var:4px]"
+             ) ==
                "[paint-order:normal] [--my-var:2rem] lg:[--my-var:4px]"
-      
+
       assert Twm.merge("[background:red] [background:blue] [border:solid]") ==
                "[background:blue] [border:solid]"
     end
@@ -33,7 +37,7 @@ defmodule Twm.ArbitraryPropertiesTest do
 
     test "handles important modifier correctly" do
       assert Twm.merge("![some:prop] [some:other]") == "![some:prop] [some:other]"
-      
+
       assert Twm.merge("![some:prop] [some:other] [some:one] ![some:another]") ==
                "[some:one] ![some:another]"
     end
@@ -62,58 +66,60 @@ defmodule Twm.ArbitraryPropertiesTest do
 
       # Create a custom merge function with the configuration
       custom_merge = Twm.create_tailwind_merge(fn -> custom_config end)
-      
+
       # Test that the custom merge function handles arbitrary properties
-      assert custom_merge.("[paint-order:markers] [paint-order:normal]") == 
+      assert custom_merge.("[paint-order:markers] [paint-order:normal]") ==
                "[paint-order:normal]"
     end
 
     test "handles arbitrary properties with extended configuration" do
       # Test extending the default configuration
-      extended_config = Twm.Config.extend(
-        cache_size: 200,
-        extend: %{
-          class_groups: %{
-            "custom-arbitrary" => [
-              %{
-                "custom-arbitrary" => &Twm.is_arbitrary_value/1
-              }
-            ]
+      extended_config =
+        Twm.Config.extend(
+          cache_size: 200,
+          extend: %{
+            class_groups: %{
+              "custom-arbitrary" => [
+                %{
+                  "custom-arbitrary" => &Twm.is_arbitrary_value/1
+                }
+              ]
+            }
           }
-        }
-      )
+        )
 
       # Create a custom merge function with extended configuration  
       custom_merge = Twm.create_tailwind_merge(fn -> extended_config end)
-      
+
       # Test basic functionality still works
-      assert custom_merge.("[paint-order:markers] [paint-order:normal]") == 
+      assert custom_merge.("[paint-order:markers] [paint-order:normal]") ==
                "[paint-order:normal]"
     end
 
     test "handles arbitrary properties with override configuration" do
       # Test overriding parts of the default configuration
-      overridden_config = Twm.Config.extend(
-        override: %{
-          cache_size: 50
-        },
-        extend: %{
-          class_groups: %{
-            "test-arbitrary" => [
-              %{
-                "test-arbitrary" => &Twm.is_arbitrary_value/1
-              }
-            ]
+      overridden_config =
+        Twm.Config.extend(
+          override: %{
+            cache_size: 50
+          },
+          extend: %{
+            class_groups: %{
+              "test-arbitrary" => [
+                %{
+                  "test-arbitrary" => &Twm.is_arbitrary_value/1
+                }
+              ]
+            }
           }
-        }
-      )
+        )
 
       # Create a custom merge function with overridden configuration
       custom_merge = Twm.create_tailwind_merge(fn -> overridden_config end)
-      
+
       # Test that arbitrary properties still work with overridden config
       assert custom_merge.("![some:prop] [some:other]") == "![some:prop] [some:other]"
-      
+
       assert custom_merge.("![some:prop] [some:other] [some:one] ![some:another]") ==
                "[some:one] ![some:another]"
     end
@@ -123,10 +129,10 @@ defmodule Twm.ArbitraryPropertiesTest do
     test "tw_merge is an alias that handles arbitrary properties" do
       assert Twm.tw_merge("[paint-order:markers] [paint-order:normal]") ==
                Twm.merge("[paint-order:markers] [paint-order:normal]")
-      
+
       assert Twm.tw_merge("hover:[paint-order:markers] hover:[paint-order:normal]") ==
                Twm.merge("hover:[paint-order:markers] hover:[paint-order:normal]")
-      
+
       assert Twm.tw_merge("![some:prop] [some:other]") ==
                Twm.merge("![some:prop] [some:other]")
     end
@@ -134,12 +140,12 @@ defmodule Twm.ArbitraryPropertiesTest do
 
   describe "merge/1 with list input and arbitrary properties" do
     test "handles arbitrary properties when classes are provided as a list" do
-      assert Twm.merge(["[paint-order:markers]", "[paint-order:normal]"]) == 
+      assert Twm.merge(["[paint-order:markers]", "[paint-order:normal]"]) ==
                "[paint-order:normal]"
-      
+
       assert Twm.merge(["hover:[paint-order:markers]", "hover:[paint-order:normal]"]) ==
                "hover:[paint-order:normal]"
-      
+
       assert Twm.merge(["![some:prop]", "[some:other]", "[some:one]", "![some:another]"]) ==
                "[some:one] ![some:another]"
     end
@@ -157,11 +163,15 @@ defmodule Twm.ArbitraryPropertiesTest do
 
     test "handles malformed arbitrary properties" do
       assert Twm.merge("[paint-order [paint-order:normal]") == "[paint-order [paint-order:normal]"
-      assert Twm.merge("paint-order:] [paint-order:normal]") == "paint-order:] [paint-order:normal]"
+
+      assert Twm.merge("paint-order:] [paint-order:normal]") ==
+               "paint-order:] [paint-order:normal]"
     end
 
     test "handles mixed arbitrary and regular properties" do
-      assert Twm.merge("[background:red] [paint-order:markers] [background:blue] [paint-order:normal]") ==
+      assert Twm.merge(
+               "[background:red] [paint-order:markers] [background:blue] [paint-order:normal]"
+             ) ==
                "[background:blue] [paint-order:normal]"
     end
 
