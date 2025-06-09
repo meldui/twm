@@ -430,6 +430,7 @@ defmodule Twm.Config.Default do
 
       # Typography
       "font-size": [%{"font-size": ["xs", "sm", "base", "lg", "xl", &Twm.is_arbitrary_value/1]}],
+      "font-weight": [%{font: ["thin", "extralight", "light", "normal", "medium", "semibold", "bold", "extrabold", "black"]}],
       text: [%{text: theme_text()}],
       "text-decoration": ["underline", "overline", "line-through", "no-underline"],
       "text-decoration-style": [%{decoration: ["solid", "double", "dotted", "dashed", "wavy"]}],
@@ -490,6 +491,7 @@ defmodule Twm.Config.Default do
       my: ["mt", "mb"],
       size: ["w", "h"],
       "font-size": ["leading"],
+      "font-weight": [],
       text: [],
       bg: [],
       "fvn-normal": [
