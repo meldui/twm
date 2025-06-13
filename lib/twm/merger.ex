@@ -49,11 +49,12 @@ defmodule Twm.Merger do
   defp merge_class_list(class_list, class_utils, parse_class_name, config) do
     # Parse each class and track conflicts
     parsed_classes =
-      Enum.map(class_list, &parse_class_with_modifiers(&1, class_utils, parse_class_name))
+      Enum.map(class_list, &parse_class_with_modifiers(&1, class_utils, parse_class_name, config))
 
     # Group by conflict keys and handle conflicting class groups
     result_map =
       parsed_classes
+      |> IO.inspect()
       |> Enum.with_index()
       |> Enum.reduce(%{}, fn {{class, parsed_info}, index}, acc ->
         class_group_id = parsed_info.class_group_id
@@ -61,16 +62,19 @@ defmodule Twm.Merger do
         important = parsed_info.important
 
         # Create the primary conflict key for this class
-        conflict_key = get_conflict_key(parsed_info, class_utils, config)
+        conflict_key =
+          get_conflict_key(parsed_info, class_utils) |> IO.inspect(label: :conflict_key)
 
         # Get all conflicting class group IDs
         has_postfix_modifier = Map.get(parsed_info, :has_postfix_modifier, false)
+
         conflicting_groups =
           if class_group_id do
             class_utils.get_conflicting_class_group_ids.(class_group_id, has_postfix_modifier)
           else
             []
           end
+          |> IO.inspect()
 
         # Remove any existing classes that conflict with this one
         updated_acc =
@@ -81,6 +85,7 @@ defmodule Twm.Merger do
             modifiers,
             important
           )
+          |> IO.inspect(label: :after_remove_conflicting_class)
 
         # Add this class to the map
         Map.put(updated_acc, conflict_key, {class, index, parsed_info})
@@ -95,7 +100,7 @@ defmodule Twm.Merger do
   end
 
   # Parse a class with its modifiers and important flag
-  defp parse_class_with_modifiers(class, class_utils, parse_class_name) do
+  defp parse_class_with_modifiers(class, class_utils, parse_class_name, config) do
     # First, try to get the class group ID from the original class
     original_class_group_id = class_utils.get_class_group_id.(class)
 
@@ -120,7 +125,7 @@ defmodule Twm.Merger do
 
       {class, parsed_info}
     else
-      modifiers = Map.get(parsed_class_name, :modifiers, [])
+      modifiers = sort_modifiers_with_config(Map.get(parsed_class_name, :modifiers, []), config)
       important = Map.get(parsed_class_name, :has_important_modifier, false)
       base_class = Map.get(parsed_class_name, :base_class_name, class)
       has_postfix_modifier = Map.get(parsed_class_name, :maybe_postfix_modifier_position) != nil
@@ -154,7 +159,7 @@ defmodule Twm.Merger do
 
           if parser_transformed do
             # Experimental parser transformed the class - use the transformed result
-            reconstruct_class_name(modifiers, base_class, important)
+            reconstruct_class_name(modifiers, base_class, important, config)
           else
             # No transformation - use original class
             class
@@ -178,7 +183,7 @@ defmodule Twm.Merger do
   end
 
   # Reconstruct a class name from its parsed components
-  defp reconstruct_class_name(modifiers, base_class, important) do
+  defp reconstruct_class_name(modifiers, base_class, important, config) do
     modifier_prefix =
       if Enum.empty?(modifiers) do
         ""
@@ -188,7 +193,18 @@ defmodule Twm.Merger do
 
     important_prefix = if important, do: "!", else: ""
 
-    important_prefix <> modifier_prefix <> base_class
+    # Add prefix if configured
+    prefix_str =
+      case Map.get(config, :prefix) do
+        nil -> ""
+        "" -> ""
+        prefix -> prefix <> ":"
+      end
+
+    case prefix_str do
+      "" -> important_prefix <> modifier_prefix <> base_class
+      _ -> prefix_str <> modifier_prefix <> base_class <> important_prefix
+    end
   end
 
   # Remove conflicting classes from the accumulator
@@ -218,7 +234,7 @@ defmodule Twm.Merger do
   end
 
   # Get a unique conflict key for a parsed class
-  defp get_conflict_key(parsed_info, _class_utils, config) do
+  defp get_conflict_key(parsed_info, _class_utils) do
     %{
       class_group_id: class_group_id,
       modifiers: modifiers,
@@ -236,23 +252,7 @@ defmodule Twm.Merger do
       end
 
     # Handle wildcard position sensitivity for conflict key generation
-    # Only preserve order when wildcards are in different positions relative to other modifiers
-    modifier_key =
-      if Enum.any?(modifiers, &(&1 == "*")) do
-        # Check if this is a case where wildcard position matters for conflicts
-        if wildcard_position_affects_conflicts?(modifiers) do
-          # Preserve original order for position-sensitive wildcards
-          Enum.join(modifiers, ":")
-        else
-          # Use proper sorting logic for wildcards in same relative position
-          sorted_modifiers = sort_modifiers_with_config(modifiers, config)
-          Enum.join(sorted_modifiers, ":")
-        end
-      else
-        # Use proper sorting logic that respects order-sensitive modifiers
-        sorted_modifiers = sort_modifiers_with_config(modifiers, config)
-        Enum.join(sorted_modifiers, ":")
-      end
+    modifier_key = Enum.join(modifiers)
 
     case {modifier_key, important} do
       {"", false} -> base_key
@@ -266,7 +266,7 @@ defmodule Twm.Merger do
   # Returns true if wildcards are in different relative positions that should be preserved
   defp wildcard_position_affects_conflicts?(modifiers) do
     wildcard_index = Enum.find_index(modifiers, &(&1 == "*"))
-    
+
     if wildcard_index do
       # Check if wildcard is at beginning or end (position-sensitive cases)
       wildcard_index == 0 or wildcard_index == length(modifiers) - 1
@@ -278,7 +278,14 @@ defmodule Twm.Merger do
   # Sort modifiers using proper SortModifiers logic with the provided config
   defp sort_modifiers_with_config(modifiers, config) do
     sort_fn = SortModifiers.create_sort_modifiers(config)
-    sort_fn.(modifiers)
-  end
+    # Check if this is a case where wildcard position matters for conflicts
+    if Enum.any?(modifiers, &(&1 == "*")) && wildcard_position_affects_conflicts?(modifiers) do
+      modifiers
+    else
+      # Use proper sorting logic for wildcards in same relative position
+      sort_fn.(modifiers)
+    end
 
+    # sort_fn.(modifiers)
+  end
 end

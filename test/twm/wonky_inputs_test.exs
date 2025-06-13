@@ -31,11 +31,13 @@ defmodule Twm.WonkyInputsTest do
     end
 
     test "handles complex whitespace with newlines" do
-      assert Twm.merge("  block\n        \n        px-2   \n          py-4  ") == "block px-2 py-4"
+      assert Twm.merge("  block\n        \n        px-2   \n          py-4  ") ==
+               "block px-2 py-4"
     end
 
     test "handles carriage returns and newlines" do
-      assert Twm.merge("\r  block\n\r        \n        px-2   \n          py-4  ") == "block px-2 py-4"
+      assert Twm.merge("\r  block\n\r        \n        px-2   \n          py-4  ") ==
+               "block px-2 py-4"
     end
   end
 end

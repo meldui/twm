@@ -75,7 +75,7 @@ defmodule Twm.Validators do
   """
   @spec is_tshirt_size(String.t()) :: boolean()
   def is_tshirt_size(value) when is_binary(value) do
-    Regex.match?(@tshirt_unit_regex, value)
+    Regex.match?(@tshirt_unit_regex, value) |> IO.inspect()
   end
 
   @doc """

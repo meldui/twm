@@ -1,23 +1,24 @@
 defmodule Twm.ModifiersTest do
   use ExUnit.Case, async: true
 
-  setup do
-    # Start test cache processes
-    Twm.Cache.ensure_started(10, :test_cache_1)
-    Twm.Cache.ensure_started(10, :test_cache_2)
-    
-    on_exit(fn ->
-      # Clean up cache processes after each test
-      if Process.whereis(:test_cache_1) do
-        Twm.Cache.clear(:test_cache_1)
-      end
-      if Process.whereis(:test_cache_2) do
-        Twm.Cache.clear(:test_cache_2)
-      end
-    end)
-    
-    :ok
-  end
+  # setup do
+  #   # Start test cache processes
+  #   Twm.Cache.ensure_started(10, :test_cache_1)
+  #   Twm.Cache.ensure_started(10, :test_cache_2)
+
+  #   on_exit(fn ->
+  #     # Clean up cache processes after each test
+  #     if Process.whereis(:test_cache_1) do
+  #       Twm.Cache.clear(:test_cache_1)
+  #     end
+
+  #     if Process.whereis(:test_cache_2) do
+  #       Twm.Cache.clear(:test_cache_2)
+  #     end
+  #   end)
+
+  #   :ok
+  # end
 
   describe "conflicts across prefix modifiers" do
     test "basic hover modifier conflicts" do
@@ -29,12 +30,26 @@ defmodule Twm.ModifiersTest do
     end
 
     test "complex nested modifier conflicts" do
-      assert Twm.merge("hover:block hover:focus:inline focus:hover:inline") == 
-             "hover:block focus:hover:inline"
+      assert Twm.merge("hover:block hover:focus:inline focus:hover:inline") ==
+               "hover:block focus:hover:inline"
     end
 
     test "focus-within modifier conflicts" do
       assert Twm.merge("focus-within:inline focus-within:block") == "focus-within:block"
+    end
+
+    test "merges hover and focus classes correctly" do
+      assert Twm.merge("right-0 inset-0") ==
+               "inset-0"
+
+      assert Twm.merge("hover:right-0 hover:inset-0") ==
+               "hover:inset-0"
+
+      assert Twm.merge("hover:right-0 focus:inset-0") ==
+               "hover:right-0 focus:inset-0"
+
+      assert Twm.merge("hover:focus:right-0 focus:hover:inset-0") ==
+               "focus:hover:inset-0"
     end
   end
 
@@ -56,23 +71,24 @@ defmodule Twm.ModifiersTest do
     end
 
     test "custom configuration postfix modifiers" do
-      custom_merge = Twm.create_tailwind_merge(fn ->
-        %{
-          cache_name: :test_cache_1,
-          cache_size: 10,
-          theme: %{},
-          class_groups: %{
-            foo: ["foo-1/2", "foo-2/3"],
-            bar: ["bar-1", "bar-2"],
-            baz: ["baz-1", "baz-2"]
-          },
-          conflicting_class_groups: %{},
-          conflicting_class_group_modifiers: %{
-            baz: ["bar"]
-          },
-          order_sensitive_modifiers: []
-        }
-      end)
+      custom_merge =
+        Twm.create_tailwind_merge(fn ->
+          %{
+            cache_name: :test_cache_1,
+            cache_size: 10,
+            theme: %{},
+            class_groups: %{
+              foo: ["foo-1/2", "foo-2/3"],
+              bar: ["bar-1", "bar-2"],
+              baz: ["baz-1", "baz-2"]
+            },
+            conflicting_class_groups: %{},
+            conflicting_class_group_modifiers: %{
+              baz: ["bar"]
+            },
+            order_sensitive_modifiers: []
+          }
+        end)
 
       assert custom_merge.("foo-1/2 foo-2/3") == "foo-2/3"
       assert custom_merge.("bar-1 bar-2") == "bar-2"
@@ -103,19 +119,20 @@ defmodule Twm.ModifiersTest do
 
   describe "sorts modifiers correctly according to orderSensitiveModifiers" do
     test "custom order sensitive modifiers" do
-      custom_merge = Twm.create_tailwind_merge(fn ->
-        %{
-          cache_name: :test_cache_2,
-          cache_size: 10,
-          theme: %{},
-          class_groups: %{
-            foo: ["foo-1", "foo-2"]
-          },
-          conflicting_class_groups: %{},
-          conflicting_class_group_modifiers: %{},
-          order_sensitive_modifiers: ["a", "b"]
-        }
-      end)
+      custom_merge =
+        Twm.create_tailwind_merge(fn ->
+          %{
+            cache_name: :test_cache_2,
+            cache_size: 10,
+            theme: %{},
+            class_groups: %{
+              foo: ["foo-1", "foo-2"]
+            },
+            conflicting_class_groups: %{},
+            conflicting_class_group_modifiers: %{},
+            order_sensitive_modifiers: ["a", "b"]
+          }
+        end)
 
       assert custom_merge.("c:d:e:foo-1 d:c:e:foo-2") == "d:c:e:foo-2"
       assert custom_merge.("a:b:foo-1 a:b:foo-2") == "a:b:foo-2"

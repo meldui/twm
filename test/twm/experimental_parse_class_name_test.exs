@@ -102,10 +102,8 @@ defmodule Twm.ExperimentalParseClassNameTest do
           end
         )
 
-      # The experimental parser should handle the important modifier correctly
-      result = tw_merge.("px-2 py-1")
       # px and py don't conflict directly, so both should be kept
-      assert result == "!px-2 !py-1"
+      assert tw_merge.("px-2 py-1") == "!px-2 !py-1"
     end
 
     test "experimental parser returning unchanged parsed result" do

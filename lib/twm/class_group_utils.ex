@@ -260,6 +260,11 @@ defmodule Twm.ClassGroupUtils do
   # Process a class group by iterating through its definitions
   defp process_class_group(class_group, class_map, class_group_id, theme)
        when is_list(class_group) do
+    if(class_group_id == "text-color" or class_group_id == "font-size") do
+      IO.inspect(class_group_id, label: :class_group_id)
+      IO.inspect(class_group, label: :class_group)
+    end
+
     # Separate literal strings from validators and other definitions
     {literals, validators_and_others} =
       Enum.split_with(class_group, fn item ->
