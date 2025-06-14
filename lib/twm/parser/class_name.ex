@@ -25,8 +25,8 @@ defmodule Twm.Parser.ClassName do
   """
   @spec create_parse_class_name(Types.config()) :: (String.t() -> Types.parsed_class_name())
   def create_parse_class_name(config) do
-    prefix = Map.get(config, :prefix)
-    experimental_parse_class_name = Map.get(config, :experimental_parse_class_name)
+    prefix = Keyword.get(config, :prefix)
+    experimental_parse_class_name = Keyword.get(config, :experimental_parse_class_name)
 
     parse_class_name = fn class_name ->
       do_parse_class_name(class_name)

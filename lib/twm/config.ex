@@ -14,11 +14,11 @@ defmodule Twm.Config do
   ## Examples
 
       iex> config = Twm.Config.get_default()
-      iex> config.cache_size
+      iex> config[:cache_size]
       500
 
   """
-  @spec get_default() :: map()
+  @spec get_default() :: keyword()
   def get_default, do: Default.get()
 
   @doc """
@@ -34,19 +34,19 @@ defmodule Twm.Config do
   ## Examples
 
       iex> config = Twm.Config.extend(cache_size: 1000)
-      iex> config.cache_size
+      iex> config[:cache_size]
       1000
 
-      iex> config = Twm.Config.extend(override: %{class_groups: %{display: ["custom-display"]}})
-      iex> config.class_groups.display
+      iex> config = Twm.Config.extend(override: [class_groups: [display: ["custom-display"]]])
+      iex> config[:class_groups][:display]
       ["custom-display"]
 
-      iex> config = Twm.Config.extend(extend: %{class_groups: %{custom_group: ["custom-class"]}})
-      iex> config.class_groups.custom_group
+      iex> config = Twm.Config.extend(extend: [class_groups: [custom_group: ["custom-class"]]])
+      iex> config[:class_groups][:custom_group]
       ["custom-class"]
 
   """
-  @spec extend(keyword()) :: map()
+  @spec extend(keyword()) :: keyword()
   def extend(options \\ []) do
     default_config = get_default()
 
@@ -72,31 +72,31 @@ defmodule Twm.Config do
 
   # Helper function to update a config option if a value is provided
   defp maybe_update_option(config, _key, nil), do: config
-  defp maybe_update_option(config, key, value), do: Map.put(config, key, value)
+  defp maybe_update_option(config, key, value), do: Keyword.put(config, key, value)
 
   # Override configuration values
-  defp override_config(config, override_values) when is_map(override_values) do
+  defp override_config(config, override_values) when is_list(override_values) do
     override_values
     |> Enum.reduce(config, fn {key, value}, acc ->
-      Map.put(acc, key, value)
+      Keyword.put(acc, key, value)
     end)
   end
 
   # Extend configuration values
-  defp extend_config(config, extend_values) when is_map(extend_values) do
+  defp extend_config(config, extend_values) when is_list(extend_values) do
     extend_values
     |> Enum.reduce(config, fn {key, value}, acc ->
-      current_value = Map.get(acc, key)
+      current_value = Keyword.get(acc, key)
 
       extended_value = merge(current_value, value)
-      Map.put(acc, key, extended_value)
+      Keyword.put(acc, key, extended_value)
     end)
   end
 
-  defp merge(current_value, value) when is_map(current_value) and is_map(value) do
-    Map.merge(current_value, value, fn _k, v1, v2 ->
-      case {is_map(v1), is_map(v2)} do
-        {true, true} -> Map.merge(v1, v2)
+  defp merge(current_value, value) when is_list(current_value) and is_list(value) do
+    Keyword.merge(current_value, value, fn _k, v1, v2 ->
+      case {is_list(v1), is_list(v2)} do
+        {true, true} -> Keyword.merge(v1, v2)
         _ -> v2
       end
     end)
@@ -111,26 +111,26 @@ defmodule Twm.Config do
   end
 
   @doc """
-  Validates a configuration map.
+  Validates a configuration keyword list.
 
   Checks if all required keys are present and the values have the correct types.
 
   ## Examples
 
       iex> Twm.Config.validate(Twm.Config.get_default())
-      {:ok, %{...}}
+      {:ok, [...]}
 
-      iex> Twm.Config.validate(%{})
+      iex> Twm.Config.validate([])
       {:error, "Missing required configuration keys: cache_size, theme, class_groups, conflicting_class_groups"}
 
   """
-  @spec validate(map()) :: {:ok, map()} | {:error, String.t()}
-  def validate(config) when is_map(config) do
+  @spec validate(keyword()) :: {:ok, keyword()} | {:error, String.t()}
+  def validate(config) when is_list(config) do
     required_keys = [:cache_name, :cache_size, :theme, :class_groups, :conflicting_class_groups]
 
     missing_keys =
       Enum.filter(required_keys, fn key ->
-        !Map.has_key?(config, key)
+        !Keyword.has_key?(config, key)
       end)
 
     if Enum.empty?(missing_keys) do

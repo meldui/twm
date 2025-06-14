@@ -6,14 +6,14 @@ defmodule Twm.SortModifiersTest do
 
   describe "create_sort_modifiers/1" do
     test "returns a function that sorts modifiers" do
-      config = %{order_sensitive_modifiers: ["hover", "focus"]}
+      config = [order_sensitive_modifiers: ["hover", "focus"]]
       sort_fn = SortModifiers.create_sort_modifiers(config)
 
       assert is_function(sort_fn, 1)
     end
 
     test "handles empty order_sensitive_modifiers" do
-      config = %{order_sensitive_modifiers: []}
+      config = [order_sensitive_modifiers: []]
       sort_fn = SortModifiers.create_sort_modifiers(config)
 
       result = sort_fn.(["d", "c", "e"])
@@ -21,7 +21,7 @@ defmodule Twm.SortModifiersTest do
     end
 
     test "handles missing order_sensitive_modifiers key" do
-      config = %{}
+      config = []
       sort_fn = SortModifiers.create_sort_modifiers(config)
 
       result = sort_fn.(["d", "c", "e"])
@@ -158,7 +158,7 @@ defmodule Twm.SortModifiersTest do
       # This means modifiers ['c', 'd', 'e'] should become ['c', 'd', 'e'] (already sorted)
       # But modifiers ['d', 'c', 'e'] should become ['c', 'd', 'e']
 
-      config = %{order_sensitive_modifiers: []}
+      config = [order_sensitive_modifiers: []]
       sort_fn = SortModifiers.create_sort_modifiers(config)
 
       result1 = sort_fn.(["c", "d", "e"])
@@ -172,7 +172,7 @@ defmodule Twm.SortModifiersTest do
       # Based on the test with orderSensitiveModifiers: ['a', 'b']
       # 'a:b:foo-1 b:a:foo-2' stays as separate classes because modifiers differ
 
-      config = %{order_sensitive_modifiers: ["a", "b"]}
+      config = [order_sensitive_modifiers: ["a", "b"]]
       sort_fn = SortModifiers.create_sort_modifiers(config)
 
       # a:b should stay a:b

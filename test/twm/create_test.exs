@@ -6,22 +6,22 @@ defmodule Twm.Config.CreateTest do
     test "works with single config function" do
       tailwind_merge =
         Twm.create_tailwind_merge(fn ->
-          %{
+          [
             cache_name: Twm.Cache,
             cache_size: 20,
-            theme: %{},
-            class_groups: %{
+            theme: [],
+            class_groups: [
               fooKey: [%{fooKey: ["bar", "baz"]}],
               fooKey2: [%{fooKey: ["qux", "quux"]}, "other-2"],
               otherKey: ["nother", "group"]
-            },
-            conflicting_class_groups: %{
+            ],
+            conflicting_class_groups: [
               fooKey: ["otherKey"],
               otherKey: ["fooKey", "fooKey2"]
-            },
-            conflicting_class_group_modifiers: %{},
+            ],
+            conflicting_class_group_modifiers: [],
             order_sensitive_modifiers: []
-          }
+          ]
         end)
 
       assert tailwind_merge.("") == ""
@@ -42,33 +42,33 @@ defmodule Twm.Config.CreateTest do
       tailwind_merge =
         Twm.create_tailwind_merge([
           fn ->
-            %{
+            [
               cache_name: Twm.Cache,
               cache_size: 20,
-              theme: %{},
-              class_groups: %{
+              theme: [],
+              class_groups: [
                 fooKey: [%{fooKey: ["bar", "baz"]}],
                 fooKey2: [%{fooKey: ["qux", "quux"]}, "other-2"],
                 otherKey: ["nother", "group"]
-              },
-              conflicting_class_groups: %{
+              ],
+              conflicting_class_groups: [
                 fooKey: ["otherKey"],
                 otherKey: ["fooKey", "fooKey2"]
-              },
-              conflicting_class_group_modifiers: %{},
+              ],
+              conflicting_class_group_modifiers: [],
               order_sensitive_modifiers: []
-            }
+            ]
           end,
           fn config ->
             # Update class_groups
             config =
-              Map.update!(config, :class_groups, fn class_groups ->
-                Map.put(class_groups, :helloFromSecondConfig, ["hello-there"])
+              Keyword.update!(config, :class_groups, fn class_groups ->
+                Keyword.put(class_groups, :helloFromSecondConfig, ["hello-there"])
               end)
 
             # Update conflicting_class_groups
-            Map.update!(config, :conflicting_class_groups, fn conflicting ->
-              Map.update(conflicting, :fooKey, ["helloFromSecondConfig"], fn existing ->
+            Keyword.update!(config, :conflicting_class_groups, fn conflicting ->
+              Keyword.update(conflicting, :fooKey, ["helloFromSecondConfig"], fn existing ->
                 existing ++ ["helloFromSecondConfig"]
               end)
             end)

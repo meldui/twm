@@ -27,8 +27,8 @@ defmodule Twm.Merger do
       "pt-4 pb-3"
 
   """
-  @spec merge_classes(String.t(), map()) :: String.t()
-  def merge_classes(classes, config) when is_binary(classes) and is_map(config) do
+  @spec merge_classes(String.t(), keyword()) :: String.t()
+  def merge_classes(classes, config) when is_binary(classes) and is_list(config) do
     if classes == "" do
       ""
     else
@@ -54,7 +54,6 @@ defmodule Twm.Merger do
     # Group by conflict keys and handle conflicting class groups
     result_map =
       parsed_classes
-      |> IO.inspect()
       |> Enum.with_index()
       |> Enum.reduce(%{}, fn {{class, parsed_info}, index}, acc ->
         class_group_id = parsed_info.class_group_id
@@ -62,8 +61,7 @@ defmodule Twm.Merger do
         important = parsed_info.important
 
         # Create the primary conflict key for this class
-        conflict_key =
-          get_conflict_key(parsed_info, class_utils) |> IO.inspect(label: :conflict_key)
+        conflict_key = get_conflict_key(parsed_info, class_utils)
 
         # Get all conflicting class group IDs
         has_postfix_modifier = Map.get(parsed_info, :has_postfix_modifier, false)
@@ -74,7 +72,6 @@ defmodule Twm.Merger do
           else
             []
           end
-          |> IO.inspect()
 
         # Remove any existing classes that conflict with this one
         updated_acc =
@@ -85,7 +82,6 @@ defmodule Twm.Merger do
             modifiers,
             important
           )
-          |> IO.inspect(label: :after_remove_conflicting_class)
 
         # Add this class to the map
         Map.put(updated_acc, conflict_key, {class, index, parsed_info})
@@ -195,7 +191,7 @@ defmodule Twm.Merger do
 
     # Add prefix if configured
     prefix_str =
-      case Map.get(config, :prefix) do
+      case Keyword.get(config, :prefix) do
         nil -> ""
         "" -> ""
         prefix -> prefix <> ":"
@@ -216,6 +212,7 @@ defmodule Twm.Merger do
         existing_important = parsed_info.important
 
         # Check if this existing class conflicts with the new one
+
         should_remove =
           existing_group_id &&
             existing_modifiers == modifiers &&

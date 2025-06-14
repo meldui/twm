@@ -46,23 +46,23 @@ defmodule Twm.ArbitraryPropertiesTest do
   describe "merge/1 with custom configuration" do
     test "handles arbitrary properties with custom config" do
       # Test with custom configuration that allows configuration override
-      custom_config = %{
+      custom_config = [
         cache_name: Twm.Cache,
         cache_size: 100,
-        theme: %{},
-        class_groups: %{
-          "arbitrary-property" => [
+        theme: [],
+        class_groups: [
+          "arbitrary-property": [
             %{
               "arbitrary-property" => &Twm.is_arbitrary_value/1
             }
           ]
-        },
-        conflicting_class_groups: %{
-          "arbitrary-property" => ["arbitrary-property"]
-        },
-        conflicting_class_group_modifiers: %{},
+        ],
+        conflicting_class_groups: [
+          "arbitrary-property": ["arbitrary-property"]
+        ],
+        conflicting_class_group_modifiers: [],
         order_sensitive_modifiers: []
-      }
+      ]
 
       # Create a custom merge function with the configuration
       custom_merge = Twm.create_tailwind_merge(fn -> custom_config end)
@@ -76,19 +76,18 @@ defmodule Twm.ArbitraryPropertiesTest do
       # Test extending the default configuration
       extended_config =
         Twm.Config.extend(
-          cache_size: 200,
-          extend: %{
-            class_groups: %{
-              "custom-arbitrary" => [
+          extend: [
+            class_groups: [
+              "test-arbitrary": [
                 %{
-                  "custom-arbitrary" => &Twm.is_arbitrary_value/1
+                  "test-arbitrary" => &Twm.is_arbitrary_value/1
                 }
               ]
-            }
-          }
+            ]
+          ]
         )
 
-      # Create a custom merge function with extended configuration  
+      # Create a custom merge function with extended configuration
       custom_merge = Twm.create_tailwind_merge(fn -> extended_config end)
 
       # Test basic functionality still works
@@ -100,18 +99,18 @@ defmodule Twm.ArbitraryPropertiesTest do
       # Test overriding parts of the default configuration
       overridden_config =
         Twm.Config.extend(
-          override: %{
+          override: [
             cache_size: 50
-          },
-          extend: %{
-            class_groups: %{
-              "test-arbitrary" => [
+          ],
+          extend: [
+            class_groups: [
+              "test-arbitrary": [
                 %{
                   "test-arbitrary" => &Twm.is_arbitrary_value/1
                 }
               ]
-            }
-          }
+            ]
+          ]
         )
 
       # Create a custom merge function with overridden configuration

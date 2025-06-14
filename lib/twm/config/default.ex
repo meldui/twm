@@ -41,9 +41,9 @@ defmodule Twm.Config.Default do
       true
 
   """
-  @spec get() :: map()
+  @spec get() :: keyword()
   def get do
-    %{
+    [
       cache_name: Twm.Cache,
       cache_size: 500,
       theme: theme(),
@@ -51,7 +51,7 @@ defmodule Twm.Config.Default do
       conflicting_class_groups: conflicting_class_groups(),
       conflicting_class_group_modifiers: conflicting_class_group_modifiers(),
       order_sensitive_modifiers: order_sensitive_modifiers()
-    }
+    ]
   end
 
   # Scale helpers
@@ -114,9 +114,9 @@ defmodule Twm.Config.Default do
   defp scale_grid_col_row_start_and_end do
     [
       "auto",
-      %{
+      [
         span: ["full", &Twm.is_integer/1, &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]
-      },
+      ],
       &Twm.is_integer/1,
       &Twm.is_arbitrary_variable/1,
       &Twm.is_arbitrary_value/1
@@ -178,11 +178,11 @@ defmodule Twm.Config.Default do
   defp scale_bg_position do
     scale_position() ++
       [&Twm.is_arbitrary_variable_position/1, &Twm.is_arbitrary_position/1] ++
-      [%{position: [&Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]}]
+      [[position: [&Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]]]
   end
 
   defp scale_bg_repeat do
-    ["no-repeat", %{repeat: ["", "x", "y", "space", "round"]}]
+    ["no-repeat", [repeat: ["", "x", "y", "space", "round"]]]
   end
 
   defp scale_bg_size do
@@ -192,7 +192,7 @@ defmodule Twm.Config.Default do
       "contain",
       &Twm.is_arbitrary_variable_size/1,
       &Twm.is_arbitrary_size/1,
-      %{size: [&Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]}
+      [size: [&Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]]
     ]
   end
 
@@ -270,7 +270,7 @@ defmodule Twm.Config.Default do
 
   # Configuration components
   defp theme do
-    %{
+    [
       animate: ["spin", "ping", "pulse", "bounce"],
       aspect: ["video"],
       blur: [&Twm.is_tshirt_size/1],
@@ -300,14 +300,14 @@ defmodule Twm.Config.Default do
       text: [&Twm.is_tshirt_size/1],
       "text-shadow": [&Twm.is_tshirt_size/1],
       tracking: ["tighter", "tight", "normal", "wide", "wider", "widest"]
-    }
+    ]
   end
 
   defp class_groups do
-    %{
+    [
       # Layout
       aspect: [
-        %{
+        [
           aspect: [
             "auto",
             "square",
@@ -316,24 +316,24 @@ defmodule Twm.Config.Default do
             &Twm.is_arbitrary_variable/1,
             theme_aspect()
           ]
-        }
+        ]
       ],
       container: ["container"],
       columns: [
-        %{
+        [
           columns: [
             &Twm.is_number/1,
             &Twm.is_arbitrary_value/1,
             &Twm.is_arbitrary_variable/1,
             theme_container()
           ]
-        }
+        ]
       ],
-      "break-after": [%{"break-after": scale_break()}],
-      "break-before": [%{"break-before": scale_break()}],
-      "break-inside": [%{"break-inside": ["auto", "avoid", "avoid-page", "avoid-column"]}],
-      "box-decoration": [%{"box-decoration": ["slice", "clone"]}],
-      box: [%{box: ["border", "content"]}],
+      "break-after": [["break-after": scale_break()]],
+      "break-before": [["break-before": scale_break()]],
+      "break-inside": [["break-inside": ["auto", "avoid", "avoid-page", "avoid-column"]]],
+      "box-decoration": [["box-decoration": ["slice", "clone"]]],
+      box: [[box: ["border", "content"]]],
       display: [
         "block",
         "inline-block",
@@ -358,35 +358,35 @@ defmodule Twm.Config.Default do
         "hidden"
       ],
       sr: ["sr-only", "not-sr-only"],
-      float: [%{float: ["right", "left", "none", "start", "end"]}],
-      clear: [%{clear: ["left", "right", "both", "none", "start", "end"]}],
+      float: [[float: ["right", "left", "none", "start", "end"]]],
+      clear: [[clear: ["left", "right", "both", "none", "start", "end"]]],
       isolation: ["isolate", "isolation-auto"],
-      "object-fit": [%{object: ["contain", "cover", "fill", "none", "scale-down"]}],
-      "object-position": [%{object: scale_position_with_arbitrary()}],
-      overflow: [%{overflow: scale_overflow()}],
-      "overflow-x": [%{"overflow-x": scale_overflow()}],
-      "overflow-y": [%{"overflow-y": scale_overflow()}],
-      overscroll: [%{overscroll: scale_overscroll()}],
-      "overscroll-x": [%{"overscroll-x": scale_overscroll()}],
-      "overscroll-y": [%{"overscroll-y": scale_overscroll()}],
+      "object-fit": [[object: ["contain", "cover", "fill", "none", "scale-down"]]],
+      "object-position": [[object: scale_position_with_arbitrary()]],
+      overflow: [[overflow: scale_overflow()]],
+      "overflow-x": [["overflow-x": scale_overflow()]],
+      "overflow-y": [["overflow-y": scale_overflow()]],
+      overscroll: [[overscroll: scale_overscroll()]],
+      "overscroll-x": [["overscroll-x": scale_overscroll()]],
+      "overscroll-y": [["overscroll-y": scale_overscroll()]],
       position: ["static", "fixed", "absolute", "relative", "sticky"],
-      inset: [%{inset: scale_inset()}],
-      "inset-x": [%{"inset-x": scale_inset()}],
-      "inset-y": [%{"inset-y": scale_inset()}],
-      start: [%{start: scale_inset()}],
-      end: [%{end: scale_inset()}],
-      top: [%{top: scale_inset()}],
-      right: [%{right: scale_inset()}],
-      bottom: [%{bottom: scale_inset()}],
-      left: [%{left: scale_inset()}],
+      inset: [[inset: scale_inset()]],
+      "inset-x": [["inset-x": scale_inset()]],
+      "inset-y": [["inset-y": scale_inset()]],
+      start: [[start: scale_inset()]],
+      end: [[end: scale_inset()]],
+      top: [[top: scale_inset()]],
+      right: [[right: scale_inset()]],
+      bottom: [[bottom: scale_inset()]],
+      left: [[left: scale_inset()]],
       visibility: ["visible", "invisible", "collapse"],
       z: [
-        %{z: [&Twm.is_integer/1, "auto", &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]}
+        [z: [&Twm.is_integer/1, "auto", &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]]
       ],
 
       # Flexbox and Grid
       basis: [
-        %{
+        [
           basis:
             [
               &Twm.is_fraction/1,
@@ -394,12 +394,12 @@ defmodule Twm.Config.Default do
               "auto",
               theme_container()
             ] ++ scale_unambiguous_spacing()
-        }
+        ]
       ],
-      "flex-direction": [%{flex: ["row", "row-reverse", "col", "col-reverse"]}],
-      "flex-wrap": [%{flex: ["nowrap", "wrap", "wrap-reverse"]}],
+      "flex-direction": [[flex: ["row", "row-reverse", "col", "col-reverse"]]],
+      "flex-wrap": [[flex: ["nowrap", "wrap", "wrap-reverse"]]],
       flex: [
-        %{
+        [
           flex: [
             &Twm.is_number/1,
             &Twm.is_fraction/1,
@@ -408,16 +408,16 @@ defmodule Twm.Config.Default do
             "none",
             &Twm.is_arbitrary_value/1
           ]
-        }
+        ]
       ],
       grow: [
-        %{grow: ["", &Twm.is_number/1, &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]}
+        [grow: ["", &Twm.is_number/1, &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]]
       ],
       shrink: [
-        %{shrink: ["", &Twm.is_number/1, &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]}
+        [shrink: ["", &Twm.is_number/1, &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]]
       ],
       order: [
-        %{
+        [
           order: [
             &Twm.is_integer/1,
             "first",
@@ -426,105 +426,105 @@ defmodule Twm.Config.Default do
             &Twm.is_arbitrary_variable/1,
             &Twm.is_arbitrary_value/1
           ]
-        }
+        ]
       ],
-      "grid-cols": [%{"grid-cols": scale_grid_template_cols_rows()}],
-      "col-start-end": [%{col: scale_grid_col_row_start_and_end()}],
-      "col-start": [%{"col-start": scale_grid_col_row_start_or_end()}],
-      "col-end": [%{"col-end": scale_grid_col_row_start_or_end()}],
-      "grid-rows": [%{"grid-rows": scale_grid_template_cols_rows()}],
-      "row-start-end": [%{row: scale_grid_col_row_start_and_end()}],
-      "row-start": [%{"row-start": scale_grid_col_row_start_or_end()}],
-      "row-end": [%{"row-end": scale_grid_col_row_start_or_end()}],
-      "grid-flow": [%{"grid-flow": ["row", "col", "dense", "row-dense", "col-dense"]}],
-      "auto-cols": [%{"auto-cols": scale_grid_auto_cols_rows()}],
-      "auto-rows": [%{"auto-rows": scale_grid_auto_cols_rows()}],
-      gap: [%{gap: scale_unambiguous_spacing()}],
-      "gap-x": [%{"gap-x": scale_unambiguous_spacing()}],
-      "gap-y": [%{"gap-y": scale_unambiguous_spacing()}],
-      "justify-content": [%{justify: scale_align_primary_axis() ++ ["normal"]}],
-      "justify-items": [%{"justify-items": scale_align_secondary_axis() ++ ["normal"]}],
-      "justify-self": [%{"justify-self": ["auto"] ++ scale_align_secondary_axis()}],
-      "align-content": [%{content: ["normal"] ++ scale_align_primary_axis()}],
-      "align-items": [%{items: scale_align_secondary_axis() ++ [%{baseline: ["", "last"]}]}],
+      "grid-cols": [["grid-cols": scale_grid_template_cols_rows()]],
+      "col-start-end": [[col: scale_grid_col_row_start_and_end()]],
+      "col-start": [["col-start": scale_grid_col_row_start_or_end()]],
+      "col-end": [["col-end": scale_grid_col_row_start_or_end()]],
+      "grid-rows": [["grid-rows": scale_grid_template_cols_rows()]],
+      "row-start-end": [[row: scale_grid_col_row_start_and_end()]],
+      "row-start": [["row-start": scale_grid_col_row_start_or_end()]],
+      "row-end": [["row-end": scale_grid_col_row_start_or_end()]],
+      "grid-flow": [["grid-flow": ["row", "col", "dense", "row-dense", "col-dense"]]],
+      "auto-cols": [["auto-cols": scale_grid_auto_cols_rows()]],
+      "auto-rows": [["auto-rows": scale_grid_auto_cols_rows()]],
+      gap: [[gap: scale_unambiguous_spacing()]],
+      "gap-x": [["gap-x": scale_unambiguous_spacing()]],
+      "gap-y": [["gap-y": scale_unambiguous_spacing()]],
+      "justify-content": [[justify: scale_align_primary_axis() ++ ["normal"]]],
+      "justify-items": [["justify-items": scale_align_secondary_axis() ++ ["normal"]]],
+      "justify-self": [["justify-self": ["auto"] ++ scale_align_secondary_axis()]],
+      "align-content": [[content: ["normal"] ++ scale_align_primary_axis()]],
+      "align-items": [[items: scale_align_secondary_axis() ++ [[baseline: ["", "last"]]]]],
       "align-self": [
-        %{self: ["auto"] ++ scale_align_secondary_axis() ++ [%{baseline: ["", "last"]}]}
+        [self: ["auto"] ++ scale_align_secondary_axis() ++ [[baseline: ["", "last"]]]]
       ],
-      "place-content": [%{"place-content": scale_align_primary_axis()}],
-      "place-items": [%{"place-items": scale_align_secondary_axis() ++ ["baseline"]}],
-      "place-self": [%{"place-self": ["auto"] ++ scale_align_secondary_axis()}],
+      "place-content": [["place-content": scale_align_primary_axis()]],
+      "place-items": [["place-items": scale_align_secondary_axis() ++ ["baseline"]]],
+      "place-self": [["place-self": ["auto"] ++ scale_align_secondary_axis()]],
 
       # Spacing
-      p: [%{p: scale_unambiguous_spacing()}],
-      px: [%{px: scale_unambiguous_spacing()}],
-      py: [%{py: scale_unambiguous_spacing()}],
-      ps: [%{ps: scale_unambiguous_spacing()}],
-      pe: [%{pe: scale_unambiguous_spacing()}],
-      pt: [%{pt: scale_unambiguous_spacing()}],
-      pr: [%{pr: scale_unambiguous_spacing()}],
-      pb: [%{pb: scale_unambiguous_spacing()}],
-      pl: [%{pl: scale_unambiguous_spacing()}],
-      m: [%{m: scale_margin()}],
-      mx: [%{mx: scale_margin()}],
-      my: [%{my: scale_margin()}],
-      ms: [%{ms: scale_margin()}],
-      me: [%{me: scale_margin()}],
-      mt: [%{mt: scale_margin()}],
-      mr: [%{mr: scale_margin()}],
-      mb: [%{mb: scale_margin()}],
-      ml: [%{ml: scale_margin()}],
-      "space-x": [%{"space-x": scale_unambiguous_spacing()}],
+      p: [[p: scale_unambiguous_spacing()]],
+      px: [[px: scale_unambiguous_spacing()]],
+      py: [[py: scale_unambiguous_spacing()]],
+      ps: [[ps: scale_unambiguous_spacing()]],
+      pe: [[pe: scale_unambiguous_spacing()]],
+      pt: [[pt: scale_unambiguous_spacing()]],
+      pr: [[pr: scale_unambiguous_spacing()]],
+      pb: [[pb: scale_unambiguous_spacing()]],
+      pl: [[pl: scale_unambiguous_spacing()]],
+      m: [[m: scale_margin()]],
+      mx: [[mx: scale_margin()]],
+      my: [[my: scale_margin()]],
+      ms: [[ms: scale_margin()]],
+      me: [[me: scale_margin()]],
+      mt: [[mt: scale_margin()]],
+      mr: [[mr: scale_margin()]],
+      mb: [[mb: scale_margin()]],
+      ml: [[ml: scale_margin()]],
+      "space-x": [["space-x": scale_unambiguous_spacing()]],
       "space-x-reverse": ["space-x-reverse"],
-      "space-y": [%{"space-y": scale_unambiguous_spacing()}],
+      "space-y": [["space-y": scale_unambiguous_spacing()]],
       "space-y-reverse": ["space-y-reverse"],
 
       # Sizing
-      size: [%{size: scale_sizing()}],
-      w: [%{w: [theme_container(), "screen"] ++ scale_sizing()}],
+      size: [[size: scale_sizing()]],
+      w: [[w: [theme_container(), "screen"] ++ scale_sizing()]],
       "min-w": [
-        %{
+        [
           "min-w":
             [
               theme_container(),
               "screen",
               "none"
             ] ++ scale_sizing()
-        }
+        ]
       ],
       "max-w": [
-        %{
+        [
           "max-w":
             [
               theme_container(),
               "screen",
               "none",
               "prose",
-              %{screen: [theme_breakpoint()]}
+              [screen: [theme_breakpoint()]]
             ] ++ scale_sizing()
-        }
+        ]
       ],
-      h: [%{h: ["screen", "lh"] ++ scale_sizing()}],
-      "min-h": [%{"min-h": ["screen", "lh", "none"] ++ scale_sizing()}],
-      "max-h": [%{"max-h": ["screen", "lh"] ++ scale_sizing()}],
+      h: [[h: ["screen", "lh"] ++ scale_sizing()]],
+      "min-h": [["min-h": ["screen", "lh", "none"] ++ scale_sizing()]],
+      "max-h": [["max-h": ["screen", "lh"] ++ scale_sizing()]],
 
       # Typography
       "font-size": [
-        %{
+        [
           text: [
             "base",
             theme_text(),
             &Twm.is_arbitrary_variable_length/1,
             &Twm.is_arbitrary_length/1
           ]
-        }
+        ]
       ],
       "font-smoothing": ["antialiased", "subpixel-antialiased"],
       "font-style": ["italic", "not-italic"],
       "font-weight": [
-        %{font: [theme_font_weight(), &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_number/1]}
+        [font: [theme_font_weight(), &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_number/1]]
       ],
       "font-stretch": [
-        %{
+        [
           "font-stretch": [
             "ultra-condensed",
             "extra-condensed",
@@ -538,16 +538,16 @@ defmodule Twm.Config.Default do
             &Twm.is_percent/1,
             &Twm.is_arbitrary_value/1
           ]
-        }
+        ]
       ],
       "font-family": [
-        %{
+        [
           font: [
             &Twm.is_arbitrary_variable_family_name/1,
             &Twm.is_arbitrary_value/1,
             theme_font()
           ]
-        }
+        ]
       ],
       "fvn-normal": ["normal-nums"],
       "fvn-ordinal": ["ordinal"],
@@ -556,32 +556,32 @@ defmodule Twm.Config.Default do
       "fvn-spacing": ["proportional-nums", "tabular-nums"],
       "fvn-fraction": ["diagonal-fractions", "stacked-fractions"],
       tracking: [
-        %{tracking: [theme_tracking(), &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]}
+        [tracking: [theme_tracking(), &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]]
       ],
       "line-clamp": [
-        %{
+        [
           "line-clamp": [
             &Twm.is_number/1,
             "none",
             &Twm.is_arbitrary_variable/1,
             &Twm.is_arbitrary_number/1
           ]
-        }
+        ]
       ],
       leading: [
-        %{
+        [
           leading:
             [
               theme_leading()
             ] ++ scale_unambiguous_spacing()
-        }
+        ]
       ],
       "list-image": [
-        %{"list-image": ["none", &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]}
+        ["list-image": ["none", &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]]
       ],
-      "list-style-position": [%{list: ["inside", "outside"]}],
+      "list-style-position": [[list: ["inside", "outside"]]],
       "list-style-type": [
-        %{
+        [
           list: [
             "disc",
             "decimal",
@@ -589,15 +589,15 @@ defmodule Twm.Config.Default do
             &Twm.is_arbitrary_variable/1,
             &Twm.is_arbitrary_value/1
           ]
-        }
+        ]
       ],
-      "text-alignment": [%{text: ["left", "center", "right", "justify", "start", "end"]}],
-      "placeholder-color": [%{placeholder: scale_color()}],
-      "text-color": [%{text: scale_color()}],
+      "text-alignment": [[text: ["left", "center", "right", "justify", "start", "end"]]],
+      "placeholder-color": [[placeholder: scale_color()]],
+      "text-color": [[text: scale_color()]],
       "text-decoration": ["underline", "overline", "line-through", "no-underline"],
-      "text-decoration-style": [%{decoration: scale_line_style() ++ ["wavy"]}],
+      "text-decoration-style": [[decoration: scale_line_style() ++ ["wavy"]]],
       "text-decoration-thickness": [
-        %{
+        [
           decoration: [
             &Twm.is_number/1,
             "from-font",
@@ -605,25 +605,25 @@ defmodule Twm.Config.Default do
             &Twm.is_arbitrary_variable/1,
             &Twm.is_arbitrary_length/1
           ]
-        }
+        ]
       ],
-      "text-decoration-color": [%{decoration: scale_color()}],
+      "text-decoration-color": [[decoration: scale_color()]],
       "underline-offset": [
-        %{
+        [
           "underline-offset": [
             &Twm.is_number/1,
             "auto",
             &Twm.is_arbitrary_variable/1,
             &Twm.is_arbitrary_value/1
           ]
-        }
+        ]
       ],
       "text-transform": ["uppercase", "lowercase", "capitalize", "normal-case"],
       "text-overflow": ["truncate", "text-ellipsis", "text-clip"],
-      "text-wrap": [%{text: ["wrap", "nowrap", "balance", "pretty"]}],
-      indent: [%{indent: scale_unambiguous_spacing()}],
+      "text-wrap": [[text: ["wrap", "nowrap", "balance", "pretty"]]],
+      indent: [[indent: scale_unambiguous_spacing()]],
       "vertical-align": [
-        %{
+        [
           align: [
             "baseline",
             "top",
@@ -636,160 +636,160 @@ defmodule Twm.Config.Default do
             &Twm.is_arbitrary_variable/1,
             &Twm.is_arbitrary_value/1
           ]
-        }
+        ]
       ],
       whitespace: [
-        %{whitespace: ["normal", "nowrap", "pre", "pre-line", "pre-wrap", "break-spaces"]}
+        [whitespace: ["normal", "nowrap", "pre", "pre-line", "pre-wrap", "break-spaces"]]
       ],
-      break: [%{break: ["normal", "words", "all", "keep"]}],
-      wrap: [%{wrap: ["break-word", "anywhere", "normal"]}],
-      hyphens: [%{hyphens: ["none", "manual", "auto"]}],
-      content: [%{content: ["none", &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]}],
+      break: [[break: ["normal", "words", "all", "keep"]]],
+      wrap: [[wrap: ["break-word", "anywhere", "normal"]]],
+      hyphens: [[hyphens: ["none", "manual", "auto"]]],
+      content: [[content: ["none", &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]]],
 
       # Backgrounds
-      "bg-attachment": [%{bg: ["fixed", "local", "scroll"]}],
-      "bg-clip": [%{"bg-clip": ["border", "padding", "content", "text"]}],
-      "bg-origin": [%{"bg-origin": ["border", "padding", "content"]}],
-      "bg-position": [%{bg: scale_bg_position()}],
-      "bg-repeat": [%{bg: scale_bg_repeat()}],
-      "bg-size": [%{bg: scale_bg_size()}],
+      "bg-attachment": [[bg: ["fixed", "local", "scroll"]]],
+      "bg-clip": [["bg-clip": ["border", "padding", "content", "text"]]],
+      "bg-origin": [["bg-origin": ["border", "padding", "content"]]],
+      "bg-position": [[bg: scale_bg_position()]],
+      "bg-repeat": [[bg: scale_bg_repeat()]],
+      "bg-size": [[bg: scale_bg_size()]],
       "bg-image": [
-        %{
+        [
           bg: [
             "none",
-            %{
+            [
               linear: [
-                %{to: ["t", "tr", "r", "br", "b", "bl", "l", "tl"]},
+                [to: ["t", "tr", "r", "br", "b", "bl", "l", "tl"]],
                 &Twm.is_integer/1,
                 &Twm.is_arbitrary_variable/1,
                 &Twm.is_arbitrary_value/1
               ],
               radial: ["", &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1],
               conic: [&Twm.is_integer/1, &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]
-            },
+            ],
             &Twm.is_arbitrary_variable_image/1,
             &Twm.is_arbitrary_image/1
           ]
-        }
+        ]
       ],
-      "bg-color": [%{bg: scale_color()}],
-      "gradient-from-pos": [%{from: scale_gradient_stop_position()}],
-      "gradient-via-pos": [%{via: scale_gradient_stop_position()}],
-      "gradient-to-pos": [%{to: scale_gradient_stop_position()}],
-      "gradient-from": [%{from: scale_color()}],
-      "gradient-via": [%{via: scale_color()}],
-      "gradient-to": [%{to: scale_color()}],
+      "bg-color": [[bg: scale_color()]],
+      "gradient-from-pos": [[from: scale_gradient_stop_position()]],
+      "gradient-via-pos": [[via: scale_gradient_stop_position()]],
+      "gradient-to-pos": [[to: scale_gradient_stop_position()]],
+      "gradient-from": [[from: scale_color()]],
+      "gradient-via": [[via: scale_color()]],
+      "gradient-to": [[to: scale_color()]],
 
       # Borders
-      rounded: [%{rounded: scale_radius()}],
-      "rounded-s": [%{"rounded-s": scale_radius()}],
-      "rounded-e": [%{"rounded-e": scale_radius()}],
-      "rounded-t": [%{"rounded-t": scale_radius()}],
-      "rounded-r": [%{"rounded-r": scale_radius()}],
-      "rounded-b": [%{"rounded-b": scale_radius()}],
-      "rounded-l": [%{"rounded-l": scale_radius()}],
-      "rounded-ss": [%{"rounded-ss": scale_radius()}],
-      "rounded-se": [%{"rounded-se": scale_radius()}],
-      "rounded-ee": [%{"rounded-ee": scale_radius()}],
-      "rounded-es": [%{"rounded-es": scale_radius()}],
-      "rounded-tl": [%{"rounded-tl": scale_radius()}],
-      "rounded-tr": [%{"rounded-tr": scale_radius()}],
-      "rounded-br": [%{"rounded-br": scale_radius()}],
-      "rounded-bl": [%{"rounded-bl": scale_radius()}],
-      "border-spacing": [%{"border-spacing": scale_unambiguous_spacing()}],
-      "border-spacing-x": [%{"border-spacing-x": scale_unambiguous_spacing()}],
-      "border-spacing-y": [%{"border-spacing-y": scale_unambiguous_spacing()}],
-      "border-w": [%{border: scale_border_width()}],
-      "border-w-x": [%{"border-x": scale_border_width()}],
-      "border-w-y": [%{"border-y": scale_border_width()}],
-      "border-w-s": [%{"border-s": scale_border_width()}],
-      "border-w-e": [%{"border-e": scale_border_width()}],
-      "border-w-t": [%{"border-t": scale_border_width()}],
-      "border-w-r": [%{"border-r": scale_border_width()}],
-      "border-w-b": [%{"border-b": scale_border_width()}],
-      "border-w-l": [%{"border-l": scale_border_width()}],
-      "border-color": [%{border: scale_color()}],
-      "border-color-x": [%{"border-x": scale_color()}],
-      "border-color-y": [%{"border-y": scale_color()}],
-      "border-color-s": [%{"border-s": scale_color()}],
-      "border-color-e": [%{"border-e": scale_color()}],
-      "border-color-t": [%{"border-t": scale_color()}],
-      "border-color-r": [%{"border-r": scale_color()}],
-      "border-color-b": [%{"border-b": scale_color()}],
-      "border-color-l": [%{"border-l": scale_color()}],
-      "border-style": [%{border: scale_line_style()}],
-      "border-style-x": [%{"border-x": scale_line_style()}],
-      "border-style-y": [%{"border-y": scale_line_style()}],
-      "border-style-s": [%{"border-s": scale_line_style()}],
-      "border-style-e": [%{"border-e": scale_line_style()}],
-      "border-style-t": [%{"border-t": scale_line_style()}],
-      "border-style-r": [%{"border-r": scale_line_style()}],
-      "border-style-b": [%{"border-b": scale_line_style()}],
-      "border-style-l": [%{"border-l": scale_line_style()}],
-      "border-opacity": [%{"border-opacity": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]}],
+      rounded: [[rounded: scale_radius()]],
+      "rounded-s": [["rounded-s": scale_radius()]],
+      "rounded-e": [["rounded-e": scale_radius()]],
+      "rounded-t": [["rounded-t": scale_radius()]],
+      "rounded-r": [["rounded-r": scale_radius()]],
+      "rounded-b": [["rounded-b": scale_radius()]],
+      "rounded-l": [["rounded-l": scale_radius()]],
+      "rounded-ss": [["rounded-ss": scale_radius()]],
+      "rounded-se": [["rounded-se": scale_radius()]],
+      "rounded-ee": [["rounded-ee": scale_radius()]],
+      "rounded-es": [["rounded-es": scale_radius()]],
+      "rounded-tl": [["rounded-tl": scale_radius()]],
+      "rounded-tr": [["rounded-tr": scale_radius()]],
+      "rounded-br": [["rounded-br": scale_radius()]],
+      "rounded-bl": [["rounded-bl": scale_radius()]],
+      "border-spacing": [["border-spacing": scale_unambiguous_spacing()]],
+      "border-spacing-x": [["border-spacing-x": scale_unambiguous_spacing()]],
+      "border-spacing-y": [["border-spacing-y": scale_unambiguous_spacing()]],
+      "border-w": [[border: scale_border_width()]],
+      "border-w-x": [["border-x": scale_border_width()]],
+      "border-w-y": [["border-y": scale_border_width()]],
+      "border-w-s": [["border-s": scale_border_width()]],
+      "border-w-e": [["border-e": scale_border_width()]],
+      "border-w-t": [["border-t": scale_border_width()]],
+      "border-w-r": [["border-r": scale_border_width()]],
+      "border-w-b": [["border-b": scale_border_width()]],
+      "border-w-l": [["border-l": scale_border_width()]],
+      "border-color": [[border: scale_color()]],
+      "border-color-x": [["border-x": scale_color()]],
+      "border-color-y": [["border-y": scale_color()]],
+      "border-color-s": [["border-s": scale_color()]],
+      "border-color-e": [["border-e": scale_color()]],
+      "border-color-t": [["border-t": scale_color()]],
+      "border-color-r": [["border-r": scale_color()]],
+      "border-color-b": [["border-b": scale_color()]],
+      "border-color-l": [["border-l": scale_color()]],
+      "border-style": [[border: scale_line_style()]],
+      "border-style-x": [["border-x": scale_line_style()]],
+      "border-style-y": [["border-y": scale_line_style()]],
+      "border-style-s": [["border-s": scale_line_style()]],
+      "border-style-e": [["border-e": scale_line_style()]],
+      "border-style-t": [["border-t": scale_line_style()]],
+      "border-style-r": [["border-r": scale_line_style()]],
+      "border-style-b": [["border-b": scale_line_style()]],
+      "border-style-l": [["border-l": scale_line_style()]],
+      "border-opacity": [["border-opacity": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]],
 
       # Divide
-      "divide-x": [%{"divide-x": scale_border_width()}],
-      "divide-y": [%{"divide-y": scale_border_width()}],
+      "divide-x": [["divide-x": scale_border_width()]],
+      "divide-y": [["divide-y": scale_border_width()]],
       "divide-x-reverse": ["divide-x-reverse"],
       "divide-y-reverse": ["divide-y-reverse"],
-      "divide-style": [%{divide: scale_line_style()}],
-      "divide-color": [%{divide: scale_color()}],
-      "divide-opacity": [%{"divide-opacity": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]}],
+      "divide-style": [[divide: scale_line_style()]],
+      "divide-color": [[divide: scale_color()]],
+      "divide-opacity": [["divide-opacity": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]],
 
       # Ring
-      ring: [%{ring: ["", "0", "1", "2", "4", "8", &Twm.is_arbitrary_value/1]}],
+      ring: [[ring: ["", "0", "1", "2", "4", "8", &Twm.is_arbitrary_value/1]]],
       "ring-inset": ["ring-inset"],
-      "ring-color": [%{ring: scale_color()}],
-      "ring-opacity": [%{"ring-opacity": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]}],
-      "ring-offset": [%{"ring-offset": scale_unambiguous_spacing()}],
-      "ring-offset-color": [%{"ring-offset": scale_color()}],
+      "ring-color": [[ring: scale_color()]],
+      "ring-opacity": [["ring-opacity": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]],
+      "ring-offset": [["ring-offset": scale_unambiguous_spacing()]],
+      "ring-offset-color": [["ring-offset": scale_color()]],
 
       # Effects
       shadow: [
-        %{shadow: ["", "sm", "md", "lg", "xl", "2xl", "inner", "none", &Twm.is_arbitrary_value/1]}
+        [shadow: ["", "sm", "md", "lg", "xl", "2xl", "inner", "none", &Twm.is_arbitrary_value/1]]
       ],
-      "shadow-color": [%{shadow: scale_color()}],
-      opacity: [%{opacity: [&Twm.is_number/1, &Twm.is_arbitrary_value/1]}],
-      "mix-blend-mode": [%{mix: scale_blend_mode()}],
-      "bg-blend-mode": [%{"bg-blend": scale_blend_mode()}],
+      "shadow-color": [[shadow: scale_color()]],
+      opacity: [[opacity: [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]],
+      "mix-blend-mode": [[mix: scale_blend_mode()]],
+      "bg-blend-mode": [["bg-blend": scale_blend_mode()]],
 
       # Filters
-      filter: [%{filter: ["", "none", &Twm.is_arbitrary_value/1]}],
-      blur: [%{blur: scale_blur()}],
-      brightness: [%{brightness: [&Twm.is_number/1, &Twm.is_arbitrary_value/1]}],
-      contrast: [%{contrast: [&Twm.is_number/1, &Twm.is_arbitrary_value/1]}],
+      filter: [[filter: ["", "none", &Twm.is_arbitrary_value/1]]],
+      blur: [[blur: scale_blur()]],
+      brightness: [[brightness: [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]],
+      contrast: [[contrast: [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]],
       "drop-shadow": [
-        %{"drop-shadow": ["", "sm", "md", "lg", "xl", "2xl", "none", &Twm.is_arbitrary_value/1]}
+        ["drop-shadow": ["", "sm", "md", "lg", "xl", "2xl", "none", &Twm.is_arbitrary_value/1]]
       ],
-      grayscale: [%{grayscale: ["", "0", &Twm.is_arbitrary_value/1]}],
-      "hue-rotate": [%{"hue-rotate": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]}],
-      invert: [%{invert: ["", "0", &Twm.is_arbitrary_value/1]}],
-      saturate: [%{saturate: [&Twm.is_number/1, &Twm.is_arbitrary_value/1]}],
-      sepia: [%{sepia: ["", "0", &Twm.is_arbitrary_value/1]}],
-      "backdrop-filter": [%{"backdrop-filter": ["", "none", &Twm.is_arbitrary_value/1]}],
-      "backdrop-blur": [%{"backdrop-blur": scale_blur()}],
+      grayscale: [[grayscale: ["", "0", &Twm.is_arbitrary_value/1]]],
+      "hue-rotate": [["hue-rotate": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]],
+      invert: [[invert: ["", "0", &Twm.is_arbitrary_value/1]]],
+      saturate: [[saturate: [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]],
+      sepia: [[sepia: ["", "0", &Twm.is_arbitrary_value/1]]],
+      "backdrop-filter": [["backdrop-filter": ["", "none", &Twm.is_arbitrary_value/1]]],
+      "backdrop-blur": [["backdrop-blur": scale_blur()]],
       "backdrop-brightness": [
-        %{"backdrop-brightness": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]}
+        ["backdrop-brightness": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]
       ],
-      "backdrop-contrast": [%{"backdrop-contrast": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]}],
-      "backdrop-grayscale": [%{"backdrop-grayscale": ["", "0", &Twm.is_arbitrary_value/1]}],
+      "backdrop-contrast": [["backdrop-contrast": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]],
+      "backdrop-grayscale": [["backdrop-grayscale": ["", "0", &Twm.is_arbitrary_value/1]]],
       "backdrop-hue-rotate": [
-        %{"backdrop-hue-rotate": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]}
+        ["backdrop-hue-rotate": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]
       ],
-      "backdrop-invert": [%{"backdrop-invert": ["", "0", &Twm.is_arbitrary_value/1]}],
-      "backdrop-opacity": [%{"backdrop-opacity": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]}],
-      "backdrop-saturate": [%{"backdrop-saturate": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]}],
-      "backdrop-sepia": [%{"backdrop-sepia": ["", "0", &Twm.is_arbitrary_value/1]}],
+      "backdrop-invert": [["backdrop-invert": ["", "0", &Twm.is_arbitrary_value/1]]],
+      "backdrop-opacity": [["backdrop-opacity": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]],
+      "backdrop-saturate": [["backdrop-saturate": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]],
+      "backdrop-sepia": [["backdrop-sepia": ["", "0", &Twm.is_arbitrary_value/1]]],
 
       # Tables
-      "border-collapse": [%{border: ["collapse", "separate"]}],
-      "table-layout": [%{table: ["auto", "fixed"]}],
-      "caption-side": [%{caption: ["top", "bottom"]}],
+      "border-collapse": [[border: ["collapse", "separate"]]],
+      "table-layout": [[table: ["auto", "fixed"]]],
+      "caption-side": [[caption: ["top", "bottom"]]],
 
       # Transitions and Animation
       "transition-property": [
-        %{
+        [
           transition: [
             "none",
             "all",
@@ -800,13 +800,13 @@ defmodule Twm.Config.Default do
             "transform",
             &Twm.is_arbitrary_value/1
           ]
-        }
+        ]
       ],
       "transition-duration": [
-        %{duration: [&Twm.is_number/1, "initial", &Twm.is_arbitrary_value/1]}
+        [duration: [&Twm.is_number/1, "initial", &Twm.is_arbitrary_value/1]]
       ],
       "transition-timing-function": [
-        %{
+        [
           ease: [
             "linear",
             "initial",
@@ -814,48 +814,48 @@ defmodule Twm.Config.Default do
             &Twm.is_arbitrary_variable/1,
             &Twm.is_arbitrary_value/1
           ]
-        }
+        ]
       ],
       "transition-delay": [
-        %{delay: [&Twm.is_number/1, &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]}
+        [delay: [&Twm.is_number/1, &Twm.is_arbitrary_variable/1, &Twm.is_arbitrary_value/1]]
       ],
       animate: [
-        %{
+        [
           animate: [
             "none",
             theme_animate(),
             &Twm.is_arbitrary_variable/1,
             &Twm.is_arbitrary_value/1
           ]
-        }
+        ]
       ],
 
       # Transforms
-      backface: [%{backface: ["hidden", "visible"]}],
+      backface: [[backface: ["hidden", "visible"]]],
       perspective: [
-        %{
+        [
           perspective: [
             theme_perspective(),
             &Twm.is_arbitrary_variable/1,
             &Twm.is_arbitrary_value/1
           ]
-        }
+        ]
       ],
-      "perspective-origin": [%{"perspective-origin": scale_position_with_arbitrary()}],
-      rotate: [%{rotate: scale_rotate()}],
-      "rotate-x": [%{"rotate-x": scale_rotate()}],
-      "rotate-y": [%{"rotate-y": scale_rotate()}],
-      "rotate-z": [%{"rotate-z": scale_rotate()}],
-      scale: [%{scale: scale_scale()}],
-      "scale-x": [%{"scale-x": scale_scale()}],
-      "scale-y": [%{"scale-y": scale_scale()}],
-      "scale-z": [%{"scale-z": scale_scale()}],
+      "perspective-origin": [["perspective-origin": scale_position_with_arbitrary()]],
+      rotate: [[rotate: scale_rotate()]],
+      "rotate-x": [["rotate-x": scale_rotate()]],
+      "rotate-y": [["rotate-y": scale_rotate()]],
+      "rotate-z": [["rotate-z": scale_rotate()]],
+      scale: [[scale: scale_scale()]],
+      "scale-x": [["scale-x": scale_scale()]],
+      "scale-y": [["scale-y": scale_scale()]],
+      "scale-z": [["scale-z": scale_scale()]],
       "scale-3d": ["scale-3d"],
-      skew: [%{skew: scale_skew()}],
-      "skew-x": [%{"skew-x": scale_skew()}],
-      "skew-y": [%{"skew-y": scale_skew()}],
+      skew: [[skew: scale_skew()]],
+      "skew-x": [["skew-x": scale_skew()]],
+      "skew-y": [["skew-y": scale_skew()]],
       transform: [
-        %{
+        [
           transform: [
             &Twm.is_arbitrary_variable/1,
             &Twm.is_arbitrary_value/1,
@@ -864,25 +864,25 @@ defmodule Twm.Config.Default do
             "gpu",
             "cpu"
           ]
-        }
+        ]
       ],
-      "transform-origin": [%{origin: scale_position_with_arbitrary()}],
-      "transform-style": [%{transform: ["3d", "flat"]}],
-      translate: [%{translate: scale_translate()}],
-      "translate-x": [%{"translate-x": scale_translate()}],
-      "translate-y": [%{"translate-y": scale_translate()}],
-      "translate-z": [%{"translate-z": scale_translate()}],
+      "transform-origin": [[origin: scale_position_with_arbitrary()]],
+      "transform-style": [[transform: ["3d", "flat"]]],
+      translate: [[translate: scale_translate()]],
+      "translate-x": [["translate-x": scale_translate()]],
+      "translate-y": [["translate-y": scale_translate()]],
+      "translate-z": [["translate-z": scale_translate()]],
       "translate-none": ["translate-none"],
 
       # Interactivity
-      accent: [%{accent: scale_color()}],
-      appearance: [%{appearance: ["none", "auto"]}],
-      "caret-color": [%{caret: scale_color()}],
+      accent: [[accent: scale_color()]],
+      appearance: [[appearance: ["none", "auto"]]],
+      "caret-color": [[caret: scale_color()]],
       "color-scheme": [
-        %{scheme: ["normal", "dark", "light", "light-dark", "only-dark", "only-light"]}
+        [scheme: ["normal", "dark", "light", "light-dark", "only-dark", "only-light"]]
       ],
       cursor: [
-        %{
+        [
           cursor: [
             "auto",
             "default",
@@ -922,40 +922,40 @@ defmodule Twm.Config.Default do
             "zoom-out",
             &Twm.is_arbitrary_value/1
           ]
-        }
+        ]
       ],
-      "pointer-events": [%{"pointer-events": ["none", "auto"]}],
-      resize: [%{resize: ["none", "y", "x", ""]}],
-      "scroll-behavior": [%{scroll: ["auto", "smooth"]}],
-      "scroll-m": [%{"scroll-m": scale_margin()}],
-      "scroll-mx": [%{"scroll-mx": scale_margin()}],
-      "scroll-my": [%{"scroll-my": scale_margin()}],
-      "scroll-ms": [%{"scroll-ms": scale_margin()}],
-      "scroll-me": [%{"scroll-me": scale_margin()}],
-      "scroll-mt": [%{"scroll-mt": scale_margin()}],
-      "scroll-mr": [%{"scroll-mr": scale_margin()}],
-      "scroll-mb": [%{"scroll-mb": scale_margin()}],
-      "scroll-ml": [%{"scroll-ml": scale_margin()}],
-      "scroll-p": [%{"scroll-p": scale_unambiguous_spacing()}],
-      "scroll-px": [%{"scroll-px": scale_unambiguous_spacing()}],
-      "scroll-py": [%{"scroll-py": scale_unambiguous_spacing()}],
-      "scroll-ps": [%{"scroll-ps": scale_unambiguous_spacing()}],
-      "scroll-pe": [%{"scroll-pe": scale_unambiguous_spacing()}],
-      "scroll-pt": [%{"scroll-pt": scale_unambiguous_spacing()}],
-      "scroll-pr": [%{"scroll-pr": scale_unambiguous_spacing()}],
-      "scroll-pb": [%{"scroll-pb": scale_unambiguous_spacing()}],
-      "scroll-pl": [%{"scroll-pl": scale_unambiguous_spacing()}],
-      "snap-align": [%{snap: ["start", "end", "center", "align-none"]}],
-      "snap-stop": [%{snap: ["normal", "always"]}],
-      "snap-type": [%{snap: ["none", "x", "y", "both"]}],
-      "snap-strictness": [%{snap: ["mandatory", "proximity"]}],
-      touch: [%{touch: ["auto", "none", "manipulation"]}],
-      "touch-x": [%{touch: ["pan-x", "pan-left", "pan-right"]}],
-      "touch-y": [%{touch: ["pan-y", "pan-up", "pan-down"]}],
-      "touch-pz": [%{touch: ["pinch-zoom"]}],
-      "user-select": [%{select: ["none", "text", "all", "auto"]}],
+      "pointer-events": [["pointer-events": ["none", "auto"]]],
+      resize: [[resize: ["none", "y", "x", ""]]],
+      "scroll-behavior": [[scroll: ["auto", "smooth"]]],
+      "scroll-m": [["scroll-m": scale_margin()]],
+      "scroll-mx": [["scroll-mx": scale_margin()]],
+      "scroll-my": [["scroll-my": scale_margin()]],
+      "scroll-ms": [["scroll-ms": scale_margin()]],
+      "scroll-me": [["scroll-me": scale_margin()]],
+      "scroll-mt": [["scroll-mt": scale_margin()]],
+      "scroll-mr": [["scroll-mr": scale_margin()]],
+      "scroll-mb": [["scroll-mb": scale_margin()]],
+      "scroll-ml": [["scroll-ml": scale_margin()]],
+      "scroll-p": [["scroll-p": scale_unambiguous_spacing()]],
+      "scroll-px": [["scroll-px": scale_unambiguous_spacing()]],
+      "scroll-py": [["scroll-py": scale_unambiguous_spacing()]],
+      "scroll-ps": [["scroll-ps": scale_unambiguous_spacing()]],
+      "scroll-pe": [["scroll-pe": scale_unambiguous_spacing()]],
+      "scroll-pt": [["scroll-pt": scale_unambiguous_spacing()]],
+      "scroll-pr": [["scroll-pr": scale_unambiguous_spacing()]],
+      "scroll-pb": [["scroll-pb": scale_unambiguous_spacing()]],
+      "scroll-pl": [["scroll-pl": scale_unambiguous_spacing()]],
+      "snap-align": [[snap: ["start", "end", "center", "align-none"]]],
+      "snap-stop": [[snap: ["normal", "always"]]],
+      "snap-type": [[snap: ["none", "x", "y", "both"]]],
+      "snap-strictness": [[snap: ["mandatory", "proximity"]]],
+      touch: [[touch: ["auto", "none", "manipulation"]]],
+      "touch-x": [[touch: ["pan-x", "pan-left", "pan-right"]]],
+      "touch-y": [[touch: ["pan-y", "pan-up", "pan-down"]]],
+      "touch-pz": [[touch: ["pinch-zoom"]]],
+      "user-select": [[select: ["none", "text", "all", "auto"]]],
       "will-change": [
-        %{
+        [
           "will-change": [
             "auto",
             "scroll",
@@ -963,31 +963,31 @@ defmodule Twm.Config.Default do
             "transform",
             &Twm.is_arbitrary_value/1
           ]
-        }
+        ]
       ],
 
       # SVG
-      fill: [%{fill: ["none"] ++ scale_color()}],
+      fill: [[fill: ["none"] ++ scale_color()]],
       "stroke-w": [
-        %{
+        [
           stroke: [
             &Twm.is_number/1,
             &Twm.is_arbitrary_variable_length/1,
             &Twm.is_arbitrary_length/1,
             &Twm.is_arbitrary_number/1
           ]
-        }
+        ]
       ],
-      stroke: [%{stroke: ["none"] ++ scale_color()}],
+      stroke: [[stroke: ["none"] ++ scale_color()]],
       # "stroke-width": [%{stroke: [&Twm.is_number/1, &Twm.is_arbitrary_value/1]}],
 
       # Accessibility
-      "forced-color-adjust": [%{"forced-color-adjust": ["auto", "none"]}]
-    }
+      "forced-color-adjust": [["forced-color-adjust": ["auto", "none"]]]
+    ]
   end
 
   defp conflicting_class_groups do
-    %{
+    [
       overflow: ["overflow-x", "overflow-y"],
       overscroll: ["overscroll-x", "overscroll-y"],
       inset: ["inset-x", "inset-y", "start", "end", "top", "right", "bottom", "left"],
@@ -1093,13 +1093,13 @@ defmodule Twm.Config.Default do
       "touch-x": ["touch"],
       "touch-y": ["touch"],
       "touch-pz": ["touch"]
-    }
+    ]
   end
 
   defp conflicting_class_group_modifiers do
-    %{
+    [
       "font-size": ["leading"]
-    }
+    ]
   end
 
   defp order_sensitive_modifiers do

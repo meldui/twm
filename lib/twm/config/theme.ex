@@ -46,16 +46,16 @@ defmodule Twm.Config.Theme do
       iex> theme_spacing = Twm.Config.Theme.from_theme("spacing")
       iex> theme_spacing.is_theme_getter
       true
-      
+
       iex> theme_color = Twm.Config.Theme.from_theme(:color)
       iex> theme_color.key
       :color
-      
+
       iex> theme_config = %{spacing: ["1", "2", "4", "8"]}
       iex> theme_spacing = Twm.Config.Theme.from_theme("spacing")
       iex> Twm.Config.Theme.call_theme_getter(theme_spacing, theme_config)
       ["1", "2", "4", "8"]
-      
+
       iex> theme_config = %{color: ["red", "blue"]}
       iex> theme_missing = Twm.Config.Theme.from_theme("missing")
       iex> Twm.Config.Theme.call_theme_getter(theme_missing, theme_config)
@@ -75,6 +75,14 @@ defmodule Twm.Config.Theme do
 
         config when is_map(config) ->
           case Map.get(config, theme_key) do
+            nil -> []
+            value when is_list(value) -> value
+            value when is_map(value) -> Map.keys(value)
+            value -> [value]
+          end
+
+        config when is_list(config) ->
+          case Keyword.get(config, theme_key) do
             nil -> []
             value when is_list(value) -> value
             value when is_map(value) -> Map.keys(value)
@@ -130,7 +138,7 @@ defmodule Twm.Config.Theme do
       iex> theme_spacing = Twm.Config.Theme.from_theme(:spacing)
       iex> Twm.Config.Theme.theme_getter?(theme_spacing)
       true
-      
+
       iex> regular_func = fn x -> x end
       iex> Twm.Config.Theme.theme_getter?(regular_func)
       false

@@ -20,16 +20,16 @@ defmodule Twm.Config.ThemeIntegrationTest do
       theme_spacing = Theme.from_theme(:spacing)
 
       # Create a simple configuration with theme getters
-      config = %{
-        theme: %{
+      config = [
+        theme: [
           spacing: ["1", "2", "4", "8", "16"]
-        },
-        class_groups: %{
+        ],
+        class_groups: [
           margin: ["auto", theme_spacing]
-        },
-        conflicting_class_groups: %{},
-        conflicting_class_group_modifiers: %{}
-      }
+        ],
+        conflicting_class_groups: [],
+        conflicting_class_group_modifiers: []
+      ]
 
       # Create class group utils
       utils = ClassGroupUtils.create_class_group_utils(config)
@@ -81,7 +81,7 @@ defmodule Twm.Config.ThemeIntegrationTest do
       theme_radius = Theme.from_theme(:radius)
 
       # Create a realistic theme configuration
-      theme_config = %{
+      theme_config = [
         spacing: [
           "0",
           "px",
@@ -160,7 +160,7 @@ defmodule Twm.Config.ThemeIntegrationTest do
           "3xl",
           "full"
         ]
-      }
+      ]
 
       # Test that theme getters extract the correct values
       spacing_values = Theme.call_theme_getter(theme_spacing, theme_config)
@@ -185,10 +185,10 @@ defmodule Twm.Config.ThemeIntegrationTest do
     test "theme getters handle missing theme keys gracefully" do
       theme_missing = Theme.from_theme(:nonexistent)
 
-      theme_config = %{
+      theme_config = [
         spacing: ["1", "2", "4"],
         color: ["red", "blue"]
-      }
+      ]
 
       # Should return empty list for missing keys
       result = Theme.call_theme_getter(theme_missing, theme_config)
@@ -199,10 +199,10 @@ defmodule Twm.Config.ThemeIntegrationTest do
       theme_font_weight = Theme.from_theme(:"font-weight")
       theme_drop_shadow = Theme.from_theme(:"drop-shadow")
 
-      theme_config = %{
+      theme_config = [
         "font-weight": ["thin", "normal", "bold", "black"],
         "drop-shadow": ["sm", "md", "lg", "xl"]
-      }
+      ]
 
       font_weight_values = Theme.call_theme_getter(theme_font_weight, theme_config)
       drop_shadow_values = Theme.call_theme_getter(theme_drop_shadow, theme_config)
@@ -216,7 +216,7 @@ defmodule Twm.Config.ThemeIntegrationTest do
 
       # Create a large theme configuration
       large_spacing_values = Enum.map(0..1000, &to_string/1)
-      theme_config = %{spacing: large_spacing_values}
+      theme_config = [spacing: large_spacing_values]
 
       # Measure time (this is more for ensuring no obvious performance issues)
       {time, result} =
@@ -236,7 +236,7 @@ defmodule Twm.Config.ThemeIntegrationTest do
       theme_color = Theme.from_theme(:color)
 
       # Create a theme configuration with nested color definitions
-      theme_config = %{
+      theme_config = [
         color: [
           "transparent",
           "current",
@@ -246,7 +246,7 @@ defmodule Twm.Config.ThemeIntegrationTest do
             "blue" => ["50", "100", "200", "300", "400", "500"]
           }
         ]
-      }
+      ]
 
       color_values = Theme.call_theme_getter(theme_color, theme_config)
 
@@ -264,11 +264,11 @@ defmodule Twm.Config.ThemeIntegrationTest do
 
   describe "backwards compatibility" do
     test "convenience functions still work as before" do
-      theme_config = %{
+      theme_config = [
         spacing: ["1", "2", "4"],
         color: ["red", "blue"],
         font: ["sans", "serif"]
-      }
+      ]
 
       # Test that the old convenience functions still work
       assert Theme.spacing(theme_config) == ["1", "2", "4"]
@@ -278,10 +278,10 @@ defmodule Twm.Config.ThemeIntegrationTest do
 
     test "regular functions are still supported by call_theme_getter" do
       regular_func = fn theme_config ->
-        Map.get(theme_config, :custom, [])
+        Keyword.get(theme_config, :custom, [])
       end
 
-      theme_config = %{custom: ["value1", "value2"]}
+      theme_config = [custom: ["value1", "value2"]]
 
       result = Theme.call_theme_getter(regular_func, theme_config)
       assert result == ["value1", "value2"]

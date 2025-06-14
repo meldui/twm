@@ -30,13 +30,13 @@ defmodule Twm.Types do
   * `:cache_size` - Size of the LRU cache (if enabled)
   * `:experimental_parse_class_name` - Optional experimental class name parser function
   """
-  @type config :: %{
-          optional(:cache_name) => atom() | String.t(),
-          optional(:prefix) => String.t(),
-          optional(:theme) => map(),
-          optional(:class_groups) => map(),
-          optional(:conflicting_class_groups) => map(),
-          optional(:cache_size) => non_neg_integer(),
-          optional(:experimental_parse_class_name) => (map() -> parsed_class_name())
-        }
+  @type config :: [
+          {:cache_name, atom() | String.t()}
+          | {:prefix, String.t()}
+          | {:theme, keyword()}
+          | {:class_groups, keyword()}
+          | {:conflicting_class_groups, keyword()}
+          | {:cache_size, non_neg_integer()}
+          | {:experimental_parse_class_name, (keyword() -> parsed_class_name())}
+        ]
 end

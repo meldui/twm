@@ -93,22 +93,22 @@ defmodule Twm do
   ## Examples
 
       iex> custom_merge = Twm.create_tailwind_merge(fn ->
-      ...>   %{
+      ...>   [
       ...>     cache_name: Twm.Cache,
       ...>     cache_size: 20,
-      ...>     theme: %{},
-      ...>     class_groups: %{
+      ...>     theme: [],
+      ...>     class_groups: [
       ...>       fooKey: [%{fooKey: ["bar", "baz"]}],
       ...>       fooKey2: [%{fooKey: ["qux", "quux"]}, "other-2"],
       ...>       otherKey: ["nother", "group"]
-      ...>     },
-      ...>     conflicting_class_groups: %{
+      ...>     ],
+      ...>     conflicting_class_groups: [
       ...>       fooKey: ["otherKey"],
       ...>       otherKey: ["fooKey", "fooKey2"]
-      ...>     },
-      ...>     conflicting_class_group_modifiers: %{},
+      ...>     ],
+      ...>     conflicting_class_group_modifiers: [],
       ...>     order_sensitive_modifiers: []
-      ...>   }
+      ...>   ]
       ...> end)
       iex> custom_merge.("my-modifier:fooKey-bar my-modifier:fooKey-baz")
       "my-modifier:fooKey-baz"
@@ -140,17 +140,14 @@ defmodule Twm do
       "p-3"
 
   """
-  @spec extend_tailwind_merge(keyword() | map()) :: (String.t() -> String.t())
-  def extend_tailwind_merge(options) when is_list(options) or is_map(options) do
-    # Convert keyword list to map if necessary
-    config_override = if is_list(options), do: Map.new(options), else: options
-
+  @spec extend_tailwind_merge(keyword()) :: (String.t() -> String.t())
+  def extend_tailwind_merge(options) when is_list(options) do
     # Create a custom merge function with the extended configuration
     fn classes ->
       # Get the default config and merge with overrides
       config =
         Twm.Config.get_default()
-        |> Map.merge(config_override)
+        |> Keyword.merge(options)
 
       # Perform the merge with the custom config
       if is_binary(classes) do

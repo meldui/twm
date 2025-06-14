@@ -13,7 +13,7 @@ defmodule Twm.SortModifiers do
 
   ## Parameters
 
-    * `config` - A map containing the `order_sensitive_modifiers` key
+    * `config` - A keyword list containing the `order_sensitive_modifiers` key
 
   ## Returns
 
@@ -21,22 +21,22 @@ defmodule Twm.SortModifiers do
 
   ## Examples
 
-      iex> config = %{order_sensitive_modifiers: ["hover", "focus"]}
+      iex> config = [order_sensitive_modifiers: ["hover", "focus"]]
       iex> sort_fn = Twm.SortModifiers.create_sort_modifiers(config)
       iex> sort_fn.(["d", "hover", "c"])
       ["d", "hover", "c"]
 
-      iex> config = %{order_sensitive_modifiers: ["hover"]}
+      iex> config = [order_sensitive_modifiers: ["hover"]]
       iex> sort_fn = Twm.SortModifiers.create_sort_modifiers(config)
       iex> sort_fn.(["[data-test]", "d", "c"])
       ["[data-test]", "c", "d"]
 
   """
-  @spec create_sort_modifiers(map()) :: (list(String.t()) -> list(String.t()))
+  @spec create_sort_modifiers(keyword()) :: (list(String.t()) -> list(String.t()))
   def create_sort_modifiers(config) do
     order_sensitive_modifiers_set =
       config
-      |> Map.get(:order_sensitive_modifiers, [])
+      |> Keyword.get(:order_sensitive_modifiers, [])
       |> MapSet.new()
 
     fn modifiers ->

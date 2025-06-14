@@ -73,21 +73,21 @@ defmodule Twm.ModifiersTest do
     test "custom configuration postfix modifiers" do
       custom_merge =
         Twm.create_tailwind_merge(fn ->
-          %{
+          [
             cache_name: :test_cache_1,
             cache_size: 10,
-            theme: %{},
-            class_groups: %{
+            theme: [],
+            class_groups: [
               foo: ["foo-1/2", "foo-2/3"],
               bar: ["bar-1", "bar-2"],
               baz: ["baz-1", "baz-2"]
-            },
-            conflicting_class_groups: %{},
-            conflicting_class_group_modifiers: %{
+            ],
+            conflicting_class_groups: [],
+            conflicting_class_group_modifiers: [
               baz: ["bar"]
-            },
+            ],
             order_sensitive_modifiers: []
-          }
+          ]
         end)
 
       assert custom_merge.("foo-1/2 foo-2/3") == "foo-2/3"
@@ -121,17 +121,17 @@ defmodule Twm.ModifiersTest do
     test "custom order sensitive modifiers" do
       custom_merge =
         Twm.create_tailwind_merge(fn ->
-          %{
+          [
             cache_name: :test_cache_2,
             cache_size: 10,
-            theme: %{},
-            class_groups: %{
+            theme: [],
+            class_groups: [
               foo: ["foo-1", "foo-2"]
-            },
-            conflicting_class_groups: %{},
-            conflicting_class_group_modifiers: %{},
+            ],
+            conflicting_class_groups: [],
+            conflicting_class_group_modifiers: [],
             order_sensitive_modifiers: ["a", "b"]
-          }
+          ]
         end)
 
       assert custom_merge.("c:d:e:foo-1 d:c:e:foo-2") == "d:c:e:foo-2"

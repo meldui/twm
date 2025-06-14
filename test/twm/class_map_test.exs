@@ -42,19 +42,22 @@ defmodule Twm.ClassMapTest do
       # correctly organizes Tailwind utilities by their first part.
       class_map = ClassGroupUtils.create_class_map(Default.get())
 
+      next_part = Keyword.get(class_map, :next_part, [])
+
       class_groups_by_first_part =
-        class_map.next_part
+        next_part
         |> Enum.map(fn {key, value} ->
-          {key,
+          {to_string(key),
            get_class_groups_in_class_part(value)
            |> MapSet.to_list()
            |> Enum.sort()}
         end)
-        |> Enum.into(%{})
+        |> Map.new()
 
       # Verify root class map structure matches original expectations
-      assert class_map.class_group_id == nil
-      assert length(class_map.validators) == 0
+      assert Keyword.get(class_map, :class_group_id) == nil
+      validators = Keyword.get(class_map, :validators, [])
+      assert length(validators) == 0
 
       # Test essential display utilities
       assert Map.get(class_groups_by_first_part, "block") == ["display"]
@@ -209,12 +212,15 @@ defmodule Twm.ClassMapTest do
       # While the exact output may differ, the essential functionality must be preserved.
       class_map = ClassGroupUtils.create_class_map(Default.get())
 
+      next_part = Keyword.get(class_map, :next_part, [])
+
       class_groups_by_first_part =
-        class_map.next_part
+        next_part
         |> Enum.map(fn {key, value} ->
-          {key, get_class_groups_in_class_part(value) |> MapSet.to_list() |> Enum.sort()}
+          {to_string(key),
+           get_class_groups_in_class_part(value) |> MapSet.to_list() |> Enum.sort()}
         end)
-        |> Enum.into(%{})
+        |> Map.new()
 
       # Verify we have the core structure expected from the original test
       # This validates that our Elixir port maintains the same functionality
@@ -370,23 +376,25 @@ defmodule Twm.ClassMapTest do
       class_map = ClassGroupUtils.create_class_map(Default.get())
 
       # Verify the basic structure
-      assert is_map(class_map)
-      assert Map.has_key?(class_map, :next_part)
-      assert Map.has_key?(class_map, :validators)
-      assert Map.has_key?(class_map, :class_group_id)
+      assert is_list(class_map)
+      assert Keyword.has_key?(class_map, :next_part)
+      assert Keyword.has_key?(class_map, :validators)
+      assert Keyword.has_key?(class_map, :class_group_id)
 
-      # Verify next_part is a map
-      assert is_map(class_map.next_part)
+      # Verify next_part is a keyword list
+      next_part = Keyword.get(class_map, :next_part, [])
+      assert is_list(next_part)
 
       # Verify validators is a list
-      assert is_list(class_map.validators)
+      validators = Keyword.get(class_map, :validators, [])
+      assert is_list(validators)
 
       # Test recursive structure - each next_part entry should have the same structure
-      Enum.each(class_map.next_part, fn {_key, class_part} ->
-        assert is_map(class_part)
-        assert Map.has_key?(class_part, :next_part)
-        assert Map.has_key?(class_part, :validators)
-        assert Map.has_key?(class_part, :class_group_id)
+      Enum.each(next_part, fn {_key, class_part} ->
+        assert is_list(class_part)
+        assert Keyword.has_key?(class_part, :next_part)
+        assert Keyword.has_key?(class_part, :validators)
+        assert Keyword.has_key?(class_part, :class_group_id)
       end)
     end
   end
@@ -395,7 +403,9 @@ defmodule Twm.ClassMapTest do
   # This is equivalent to the `getClassGroupsInClassPart` function in the original TypeScript test.
   # It traverses the class part tree structure and collects all unique class group IDs.
   defp get_class_groups_in_class_part(class_part) do
-    %{class_group_id: class_group_id, validators: validators, next_part: next_part} = class_part
+    class_group_id = Keyword.get(class_part, :class_group_id)
+    validators = Keyword.get(class_part, :validators, [])
+    next_part = Keyword.get(class_part, :next_part, [])
 
     class_groups = MapSet.new()
 
@@ -409,7 +419,8 @@ defmodule Twm.ClassMapTest do
 
     # Add class group IDs from validators
     class_groups =
-      Enum.reduce(validators, class_groups, fn %{class_group_id: validator_class_group_id}, acc ->
+      Enum.reduce(validators, class_groups, fn validator, acc ->
+        validator_class_group_id = Keyword.get(validator, :class_group_id)
         MapSet.put(acc, validator_class_group_id)
       end)
 

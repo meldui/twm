@@ -309,7 +309,7 @@ defmodule Twm.ClassGroupUtils do
       ]
 
       validators = Keyword.get(class_map, :validators, [])
-      Keyword.put(class_map, :validators, validators ++ [validator])
+      Keyword.put(class_map, :validators, [validator | validators])
     end
   end
 
@@ -507,7 +507,7 @@ defmodule Twm.ClassGroupUtils do
     ]
 
     validators = Keyword.get(class_map, :validators, [])
-    Keyword.put(class_map, :validators, validators ++ [validator])
+    Keyword.put(class_map, :validators, [validator | validators])
   end
 
   defp add_validator_to_map(validator_function, class_map, class_group_id, prefix) do
