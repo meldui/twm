@@ -747,7 +747,20 @@ defmodule Twm.Config.Default do
 
       # Effects
       shadow: [
-        [shadow: ["", "sm", "md", "lg", "xl", "2xl", "inner", "none", &Twm.is_arbitrary_value/1]]
+        [
+          shadow: [
+            "",
+            "3xs",
+            "sm",
+            "md",
+            "lg",
+            "xl",
+            "2xl",
+            "inner",
+            "none",
+            &Twm.is_arbitrary_value/1
+          ]
+        ]
       ],
       "shadow-color": [[shadow: scale_color()]],
       opacity: [[opacity: [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]],
@@ -760,7 +773,10 @@ defmodule Twm.Config.Default do
       brightness: [[brightness: [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]],
       contrast: [[contrast: [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]],
       "drop-shadow": [
-        ["drop-shadow": ["", "sm", "md", "lg", "xl", "2xl", "none", &Twm.is_arbitrary_value/1]]
+        ["drop-shadow": ["", "sm", "md", "lg", "xl", "2xl", "none", &Twm.is_arbitrary_shadow/1]]
+      ],
+      "drop-shadow-color": [
+        ["drop-shadow": scale_color()]
       ],
       grayscale: [[grayscale: ["", "0", &Twm.is_arbitrary_value/1]]],
       "hue-rotate": [["hue-rotate": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]],
@@ -982,7 +998,91 @@ defmodule Twm.Config.Default do
       # "stroke-width": [%{stroke: [&Twm.is_number/1, &Twm.is_arbitrary_value/1]}],
 
       # Accessibility
-      "forced-color-adjust": [["forced-color-adjust": ["auto", "none"]]]
+      "forced-color-adjust": [["forced-color-adjust": ["auto", "none"]]],
+
+      # v4.0+ Features
+      "field-sizing": [["field-sizing": ["content", "fixed"]]],
+      "mask-composite": [[mask: ["add", "subtract", "intersect", "exclude"]]],
+      "mask-type": [["mask-type": ["luminance", "alpha"]]],
+      "inset-ring": [
+        ["inset-ring": ["", &Twm.is_number/1, &Twm.is_arbitrary_value/1]],
+        ["inset-ring-color": scale_color()]
+      ],
+      "text-shadow": [
+        ["text-shadow": ["none", "sm", "md", "lg", "xl", "2xl", &Twm.is_arbitrary_value/1]]
+      ],
+      "text-shadow-color": [
+        ["text-shadow": scale_color()]
+      ],
+      "mask-position": [
+        ["mask-position": [&Twm.is_arbitrary_value/1, &Twm.is_arbitrary_variable/1]],
+        [
+          mask: [
+            &Twm.is_arbitrary_position/1,
+            &Twm.is_arbitrary_variable_position/1,
+            "top-left",
+            "top",
+            "top-right",
+            "left",
+            "center",
+            "right",
+            "bottom-left",
+            "bottom",
+            "bottom-right"
+          ]
+        ]
+      ],
+      "mask-size": [
+        ["mask-size": [&Twm.is_arbitrary_value/1, &Twm.is_arbitrary_variable/1]],
+        [
+          mask: [
+            &Twm.is_arbitrary_size/1,
+            &Twm.is_arbitrary_variable_size/1,
+            "auto",
+            "cover",
+            "contain"
+          ]
+        ]
+      ],
+      "mask-image": [
+        [mask: ["none", &Twm.is_arbitrary_value/1, &Twm.is_arbitrary_variable/1]]
+      ],
+      "mask-image-linear-pos": [
+        ["mask-linear": [&Twm.is_number/1]]
+      ],
+      "mask-image-linear-from-pos": [
+        ["mask-linear-from": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]
+      ],
+      "mask-image-linear-to-pos": [
+        ["mask-linear-to": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]
+      ],
+      "mask-image-linear-from-color": [
+        ["mask-linear-from-color": scale_color()]
+      ],
+      "mask-image-linear-to-color": [
+        ["mask-linear-to-color": scale_color()]
+      ],
+      "mask-image-t-from-pos": [
+        ["mask-t-from": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]
+      ],
+      "mask-image-t-to-pos": [
+        ["mask-t-to": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]
+      ],
+      "mask-image-t-from-color": [
+        ["mask-t-from-color": scale_color()]
+      ],
+      "mask-image-radial": [
+        ["mask-radial": [&Twm.is_arbitrary_value/1, &Twm.is_arbitrary_variable/1]]
+      ],
+      "mask-image-radial-from-pos": [
+        ["mask-radial-from": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]
+      ],
+      "mask-image-radial-to-pos": [
+        ["mask-radial-to": [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]
+      ],
+      "mask-image-radial-from-color": [
+        ["mask-radial-from-color": scale_color()]
+      ]
     ]
   end
 
@@ -1092,7 +1192,11 @@ defmodule Twm.Config.Default do
       touch: ["touch-x", "touch-y", "touch-pz"],
       "touch-x": ["touch"],
       "touch-y": ["touch"],
-      "touch-pz": ["touch"]
+      "touch-pz": ["touch"],
+
+      # v4.0+ conflicting groups
+      "text-shadow": ["text-shadow-color"],
+      "mask-image": ["mask-position", "mask-size"]
     ]
   end
 
