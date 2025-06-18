@@ -1,25 +1,6 @@
 defmodule Twm.ModifiersTest do
   use ExUnit.Case, async: true
 
-  # setup do
-  #   # Start test cache processes
-  #   Twm.Cache.ensure_started(10, :test_cache_1)
-  #   Twm.Cache.ensure_started(10, :test_cache_2)
-
-  #   on_exit(fn ->
-  #     # Clean up cache processes after each test
-  #     if Process.whereis(:test_cache_1) do
-  #       Twm.Cache.clear(:test_cache_1)
-  #     end
-
-  #     if Process.whereis(:test_cache_2) do
-  #       Twm.Cache.clear(:test_cache_2)
-  #     end
-  #   end)
-
-  #   :ok
-  # end
-
   describe "conflicts across prefix modifiers" do
     test "basic hover modifier conflicts" do
       assert Twm.merge("hover:block hover:inline") == "hover:inline"
@@ -71,31 +52,29 @@ defmodule Twm.ModifiersTest do
     end
 
     test "custom configuration postfix modifiers" do
-      custom_merge =
-        Twm.create_tailwind_merge(fn ->
-          [
-            cache_name: :test_cache_1,
-            cache_size: 10,
-            theme: [],
-            class_groups: [
-              foo: ["foo-1/2", "foo-2/3"],
-              bar: ["bar-1", "bar-2"],
-              baz: ["baz-1", "baz-2"]
-            ],
-            conflicting_class_groups: [],
-            conflicting_class_group_modifiers: [
-              baz: ["bar"]
-            ],
-            order_sensitive_modifiers: []
-          ]
-        end)
+      config =
+        Twm.Config.new(
+          cache_name: :test_cache_1,
+          cache_size: 10,
+          theme: [],
+          class_groups: [
+            foo: ["foo-1/2", "foo-2/3"],
+            bar: ["bar-1", "bar-2"],
+            baz: ["baz-1", "baz-2"]
+          ],
+          conflicting_class_groups: [],
+          conflicting_class_group_modifiers: [
+            baz: ["bar"]
+          ],
+          order_sensitive_modifiers: []
+        )
 
-      assert custom_merge.("foo-1/2 foo-2/3") == "foo-2/3"
-      assert custom_merge.("bar-1 bar-2") == "bar-2"
-      assert custom_merge.("bar-1 baz-1") == "bar-1 baz-1"
-      assert custom_merge.("bar-1/2 bar-2") == "bar-2"
-      assert custom_merge.("bar-2 bar-1/2") == "bar-1/2"
-      assert custom_merge.("bar-1 baz-1/2") == "baz-1/2"
+      assert Twm.merge("foo-1/2 foo-2/3", config) == "foo-2/3"
+      assert Twm.merge("bar-1 bar-2", config) == "bar-2"
+      assert Twm.merge("bar-1 baz-1", config) == "bar-1 baz-1"
+      assert Twm.merge("bar-1/2 bar-2", config) == "bar-2"
+      assert Twm.merge("bar-2 bar-1/2", config) == "bar-1/2"
+      assert Twm.merge("bar-1 baz-1/2", config) == "baz-1/2"
     end
   end
 
@@ -119,25 +98,23 @@ defmodule Twm.ModifiersTest do
 
   describe "sorts modifiers correctly according to orderSensitiveModifiers" do
     test "custom order sensitive modifiers" do
-      custom_merge =
-        Twm.create_tailwind_merge(fn ->
-          [
-            cache_name: :test_cache_2,
-            cache_size: 10,
-            theme: [],
-            class_groups: [
-              foo: ["foo-1", "foo-2"]
-            ],
-            conflicting_class_groups: [],
-            conflicting_class_group_modifiers: [],
-            order_sensitive_modifiers: ["a", "b"]
-          ]
-        end)
+      config =
+        Twm.Config.new(
+          cache_name: :test_cache_2,
+          cache_size: 10,
+          theme: [],
+          class_groups: [
+            foo: ["foo-1", "foo-2"]
+          ],
+          conflicting_class_groups: [],
+          conflicting_class_group_modifiers: [],
+          order_sensitive_modifiers: ["a", "b"]
+        )
 
-      assert custom_merge.("c:d:e:foo-1 d:c:e:foo-2") == "d:c:e:foo-2"
-      assert custom_merge.("a:b:foo-1 a:b:foo-2") == "a:b:foo-2"
-      assert custom_merge.("a:b:foo-1 b:a:foo-2") == "a:b:foo-1 b:a:foo-2"
-      assert custom_merge.("x:y:a:z:foo-1 y:x:a:z:foo-2") == "y:x:a:z:foo-2"
+      assert Twm.merge("c:d:e:foo-1 d:c:e:foo-2", config) == "d:c:e:foo-2"
+      assert Twm.merge("a:b:foo-1 a:b:foo-2", config) == "a:b:foo-2"
+      assert Twm.merge("a:b:foo-1 b:a:foo-2", config) == "a:b:foo-1 b:a:foo-2"
+      assert Twm.merge("x:y:a:z:foo-1 y:x:a:z:foo-2", config) == "y:x:a:z:foo-2"
     end
   end
 end

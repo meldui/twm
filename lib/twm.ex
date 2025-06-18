@@ -7,7 +7,7 @@ defmodule Twm do
   """
 
   alias Twm.Cache
-  alias Twm.Config.Create
+  alias Twm.Types
 
   # Re-export validators functions
   alias Twm.Validators
@@ -50,78 +50,32 @@ defmodule Twm do
       "pt-4 pb-3"
 
   """
-  @spec merge(String.t() | [String.t()]) :: String.t()
-  def merge(classes) when is_binary(classes) do
+  @spec merge(String.t() | [String.t()], Types.config()) :: String.t()
+  def merge(classes, config \\ Twm.Config.get_default())
+
+  def merge(classes, config) when is_binary(classes) do
     case Cache.get(classes) do
       {:ok, result} ->
         result
 
       :error ->
-        result = do_merge(classes)
+        result = do_merge(classes, config)
         Cache.put(classes, result)
         result
     end
   end
 
-  def merge(classes) when is_list(classes) do
+  def merge(classes, config) when is_list(classes) do
     classes
     |> flatten_and_filter_classes()
     |> Enum.join(" ")
-    |> merge()
+    |> merge(config)
   end
 
   # Private function to perform the actual merge operation
-  defp do_merge(classes) when is_binary(classes) do
-    # Get config from the application environment or use default
-    config = Application.get_env(:twm, :config, Twm.Config.get_default())
-
+  defp do_merge(classes, config) when is_binary(classes) do
     # Use the proper merger implementation
     Twm.Merger.merge_classes(classes, config)
-  end
-
-  @doc """
-  Alternative name for `merge/1` function.
-  """
-  @spec tw_merge(String.t() | [String.t()]) :: String.t()
-  def tw_merge(classes), do: merge(classes)
-
-  @doc """
-  Creates a custom tailwind merge function with the provided configuration functions.
-
-  This function allows you to create a tailwind merge function with a custom configuration.
-  It accepts one or more configuration functions that are applied in sequence.
-
-  ## Examples
-
-      iex> custom_merge = Twm.create_tailwind_merge(fn ->
-      ...>   [
-      ...>     cache_name: Twm.Cache,
-      ...>     cache_size: 20,
-      ...>     theme: [],
-      ...>     class_groups: [
-      ...>       fooKey: [%{fooKey: ["bar", "baz"]}],
-      ...>       fooKey2: [%{fooKey: ["qux", "quux"]}, "other-2"],
-      ...>       otherKey: ["nother", "group"]
-      ...>     ],
-      ...>     conflicting_class_groups: [
-      ...>       fooKey: ["otherKey"],
-      ...>       otherKey: ["fooKey", "fooKey2"]
-      ...>     ],
-      ...>     conflicting_class_group_modifiers: [],
-      ...>     order_sensitive_modifiers: []
-      ...>   ]
-      ...> end)
-      iex> custom_merge.("my-modifier:fooKey-bar my-modifier:fooKey-baz")
-      "my-modifier:fooKey-baz"
-  """
-  @spec create_tailwind_merge((-> map()) | [(-> map()) | (map() -> map())]) :: (String.t() ->
-                                                                                  String.t())
-  def create_tailwind_merge(config_fns) when is_list(config_fns) do
-    Create.tailwind_merge(config_fns)
-  end
-
-  def create_tailwind_merge(config_fn) when is_function(config_fn, 0) do
-    Create.tailwind_merge(config_fn)
   end
 
   @doc """

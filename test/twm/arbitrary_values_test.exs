@@ -90,18 +90,6 @@ defmodule Twm.ArbitraryValuesTest do
     end
   end
 
-  describe "tw_merge/1 with arbitrary values" do
-    test "tw_merge is an alias that handles arbitrary values" do
-      assert Twm.tw_merge("m-[2px] m-[10px]") == Twm.merge("m-[2px] m-[10px]")
-
-      assert Twm.tw_merge("hover:m-[2px] hover:m-[length:var(--c)]") ==
-               Twm.merge("hover:m-[2px] hover:m-[length:var(--c)]")
-
-      assert Twm.tw_merge("w-[100px] h-[200px] w-[300px]") ==
-               Twm.merge("w-[100px] h-[200px] w-[300px]")
-    end
-  end
-
   describe "merge/1 with list input and arbitrary values" do
     test "handles arbitrary values when classes are provided as a list" do
       assert Twm.merge(["m-[2px]", "m-[10px]"]) == "m-[10px]"

@@ -23,6 +23,7 @@ defmodule Twm.Types do
   @typedoc """
   Configuration for the Twm library.
 
+  * `:cache_name` - Name of the LRU cache (if enabled)
   * `:prefix` - Optional prefix for Tailwind classes
   * `:theme` - Theme configuration
   * `:class_groups` - Class group definitions

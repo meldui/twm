@@ -64,11 +64,10 @@ defmodule Twm.ArbitraryPropertiesTest do
         order_sensitive_modifiers: []
       ]
 
-      # Create a custom merge function with the configuration
-      custom_merge = Twm.create_tailwind_merge(fn -> custom_config end)
+      config = Twm.Config.new(custom_config)
 
       # Test that the custom merge function handles arbitrary properties
-      assert custom_merge.("[paint-order:markers] [paint-order:normal]") ==
+      assert Twm.merge("[paint-order:markers] [paint-order:normal]", config) ==
                "[paint-order:normal]"
     end
 
@@ -87,11 +86,8 @@ defmodule Twm.ArbitraryPropertiesTest do
           ]
         )
 
-      # Create a custom merge function with extended configuration
-      custom_merge = Twm.create_tailwind_merge(fn -> extended_config end)
-
       # Test basic functionality still works
-      assert custom_merge.("[paint-order:markers] [paint-order:normal]") ==
+      assert Twm.merge("[paint-order:markers] [paint-order:normal]", extended_config) ==
                "[paint-order:normal]"
     end
 
@@ -113,27 +109,13 @@ defmodule Twm.ArbitraryPropertiesTest do
           ]
         )
 
-      # Create a custom merge function with overridden configuration
-      custom_merge = Twm.create_tailwind_merge(fn -> overridden_config end)
+      config = Twm.Config.extend(overridden_config, fn overridden_config -> overridden_config end)
 
       # Test that arbitrary properties still work with overridden config
-      assert custom_merge.("![some:prop] [some:other]") == "![some:prop] [some:other]"
+      assert Twm.merge("![some:prop] [some:other]", config) == "![some:prop] [some:other]"
 
-      assert custom_merge.("![some:prop] [some:other] [some:one] ![some:another]") ==
+      assert Twm.merge("![some:prop] [some:other] [some:one] ![some:another]", config) ==
                "[some:one] ![some:another]"
-    end
-  end
-
-  describe "tw_merge/1 with arbitrary properties" do
-    test "tw_merge is an alias that handles arbitrary properties" do
-      assert Twm.tw_merge("[paint-order:markers] [paint-order:normal]") ==
-               Twm.merge("[paint-order:markers] [paint-order:normal]")
-
-      assert Twm.tw_merge("hover:[paint-order:markers] hover:[paint-order:normal]") ==
-               Twm.merge("hover:[paint-order:markers] hover:[paint-order:normal]")
-
-      assert Twm.tw_merge("![some:prop] [some:other]") ==
-               Twm.merge("![some:prop] [some:other]")
     end
   end
 

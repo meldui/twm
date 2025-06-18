@@ -43,10 +43,4 @@ defmodule TwmTest do
       assert result1 == "pt-4 pb-3"
     end
   end
-
-  describe "tw_merge/1" do
-    test "is an alias for merge/1" do
-      assert Twm.tw_merge("px-2 px-4") == Twm.merge("px-2 px-4")
-    end
-  end
 end

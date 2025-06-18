@@ -6,6 +6,7 @@ defmodule Twm.Config do
   for the Twm library.
   """
 
+  alias Twm.Types
   alias Twm.Config.Default
 
   @doc """
@@ -18,8 +19,16 @@ defmodule Twm.Config do
       500
 
   """
-  @spec get_default() :: keyword()
+  @spec get_default() :: Types.config()
   def get_default, do: Default.get()
+
+  @spec new(keyword()) :: Types.config()
+  def new(config) do
+    case config |> validate() do
+      {:ok, config} -> config
+      {:error, reason} -> raise("Invalid configuration passed. #{reason}")
+    end
+  end
 
   @doc """
   Extends the default configuration with custom options.
@@ -46,7 +55,7 @@ defmodule Twm.Config do
       ["custom-class"]
 
   """
-  @spec extend(keyword()) :: keyword()
+  @spec extend(keyword()) :: Types.config()
   def extend(options \\ []) do
     default_config = get_default()
 
@@ -68,6 +77,11 @@ defmodule Twm.Config do
       nil -> config
       extend_values -> extend_config(config, extend_values)
     end
+  end
+
+  @spec extend(Types.config(), fun()) :: Types.config()
+  def extend(config, extend_fn) do
+    extend_fn.(config)
   end
 
   # Helper function to update a config option if a value is provided
