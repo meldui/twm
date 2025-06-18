@@ -94,16 +94,18 @@ defmodule Twm.Config do
   end
 
   defp merge(current_value, value) when is_list(current_value) and is_list(value) do
-    Keyword.merge(current_value, value, fn _k, v1, v2 ->
-      case {is_list(v1), is_list(v2)} do
-        {true, true} -> Keyword.merge(v1, v2)
-        _ -> v2
-      end
-    end)
-  end
-
-  defp merge(current_value, value) when is_list(current_value) and is_list(value) do
-    current_value ++ value
+    # Check if both are keyword lists (have atom keys)
+    if Keyword.keyword?(current_value) and Keyword.keyword?(value) do
+      Keyword.merge(current_value, value, fn _k, v1, v2 ->
+        case {is_list(v1), is_list(v2)} do
+          {true, true} -> merge(v1, v2)
+          _ -> v2
+        end
+      end)
+    else
+      # For regular lists, concatenate
+      current_value ++ value
+    end
   end
 
   defp merge(_current_value, value) do

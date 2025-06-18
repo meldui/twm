@@ -237,7 +237,9 @@ defmodule Twm.Config.Default do
       "hue",
       "saturation",
       "color",
-      "luminosity"
+      "luminosity",
+      "plus-darker",
+      "plus-lighter"
     ]
   end
 
@@ -764,8 +766,8 @@ defmodule Twm.Config.Default do
       ],
       "shadow-color": [[shadow: scale_color()]],
       opacity: [[opacity: [&Twm.is_number/1, &Twm.is_arbitrary_value/1]]],
-      "mix-blend-mode": [[mix: scale_blend_mode()]],
-      "bg-blend-mode": [["bg-blend": scale_blend_mode()]],
+      "mix-blend": [["mix-blend": scale_blend_mode()]],
+      "bg-blend": [["bg-blend": scale_blend_mode()]],
 
       # Filters
       filter: [[filter: ["", "none", &Twm.is_arbitrary_value/1]]],

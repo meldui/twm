@@ -205,7 +205,7 @@ defmodule Twm.Merger do
 
   # Remove conflicting classes from the accumulator
   defp remove_conflicting_classes(acc, class_group_id, conflicting_groups, modifiers, important) do
-    if class_group_id && !Enum.empty?(conflicting_groups) do
+    if class_group_id do
       Enum.reduce(acc, %{}, fn {key, {class, index, parsed_info}}, new_acc ->
         existing_group_id = parsed_info.class_group_id
         existing_modifiers = parsed_info.modifiers
