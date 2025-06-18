@@ -54,7 +54,9 @@ defmodule Twm.MixProject do
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev], runtime: false},
-      {:stream_data, "~> 0.6", only: :test}
+      {:stream_data, "~> 0.6", only: :test},
+      {:benchee, "~> 1.0", only: :dev},
+      {:jason, "~> 1.4"}
     ]
   end
 end
