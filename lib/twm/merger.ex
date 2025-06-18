@@ -91,8 +91,7 @@ defmodule Twm.Merger do
     result_map
     |> Map.values()
     |> Enum.sort_by(fn {_class, index, _parsed} -> index end)
-    |> Enum.map(fn {class, _index, _parsed} -> class end)
-    |> Enum.join(" ")
+    |> Enum.map_join(" ", fn {class, _index, _parsed} -> class end)
   end
 
   # Parse a class with its modifiers and important flag

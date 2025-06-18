@@ -57,7 +57,7 @@ defmodule Twm.ClassMapTest do
       # Verify root class map structure matches original expectations
       assert Keyword.get(class_map, :class_group_id) == nil
       validators = Keyword.get(class_map, :validators, [])
-      assert length(validators) == 0
+      assert Enum.empty?(validators)
 
       # Test essential display utilities
       assert Map.get(class_groups_by_first_part, "block") == ["display"]

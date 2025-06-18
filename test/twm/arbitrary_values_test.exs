@@ -26,8 +26,7 @@ defmodule Twm.ArbitraryValuesTest do
     end
 
     test "handles value 0 correctly" do
-      # TODO: Fix min-h class group configuration
-      # assert Twm.merge("min-h-[0.5px] min-h-[0]") == "min-h-[0]"
+      assert Twm.merge("min-h-[0.5px] min-h-[0]") == "min-h-[0]"
 
       assert Twm.merge("h-[0.5px] h-[0]") == "h-[0]"
 
@@ -50,9 +49,8 @@ defmodule Twm.ArbitraryValuesTest do
 
   describe "merge/1 with complex arbitrary value conflicts" do
     test "handles complex arbitrary value conflicts correctly" do
-      # TODO: Implement grid-rows class group
-      # assert Twm.merge("grid-rows-[1fr,auto] grid-rows-2") == "grid-rows-2"
-      # assert Twm.merge("grid-rows-[repeat(20,minmax(0,1fr))] grid-rows-3") == "grid-rows-3"
+      assert Twm.merge("grid-rows-[1fr,auto] grid-rows-2") == "grid-rows-2"
+      assert Twm.merge("grid-rows-[repeat(20,minmax(0,1fr))] grid-rows-3") == "grid-rows-3"
 
       assert Twm.merge("w-[calc(100%-2rem)] w-[calc(50%+1rem)]") == "w-[calc(50%+1rem)]"
 

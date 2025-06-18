@@ -26,10 +26,6 @@ defmodule Twm.NegativeValuesTest do
       assert Twm.merge("-right-1 inset-x-1") == "inset-x-1"
     end
 
-    # TODO: This test currently tests the existing behavior but should be updated
-    # when modifier normalization is implemented. The implementation should treat
-    # "hover:focus:" and "focus:hover:" as equivalent modifier combinations that
-    # should conflict, with the expected result being "focus:hover:inset-x-1".
     test "complex modifier negative right conflicts with inset-x" do
       assert Twm.merge("hover:focus:-right-1 focus:hover:inset-x-1") == "focus:hover:inset-x-1"
     end
