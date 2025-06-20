@@ -29,7 +29,6 @@ defmodule TwmTest do
 
       # # Clear all entries from cache except our test entry
       # # This trick allows us to verify the cache is being used
-      # entries = Twm.Cache.get_state().entries
       Twm.Cache.clear()
 
       # Put our test entry back

@@ -51,7 +51,17 @@ defmodule Twm do
 
   """
   @spec merge(String.t() | [String.t()], Types.config()) :: String.t()
-  def merge(classes, config \\ Twm.Config.get_default())
+  def merge(classes, config \\ nil)
+
+  def merge(classes, nil) do
+    case Cache.get_config() do
+      {:ok, config} ->
+        merge(classes, config)
+
+      {:error, _} ->
+        merge(classes, Twm.Config.get_default())
+    end
+  end
 
   def merge(classes, config) when is_binary(classes) do
     case Cache.get(classes) do
@@ -78,52 +88,6 @@ defmodule Twm do
     Twm.Merger.merge_classes(classes, config)
   end
 
-  @doc """
-  Extends the default tailwind merge function with the provided configuration options.
-
-  This function creates a custom tailwind merge function by extending the default
-  configuration with the provided options.
-
-  ## Examples
-
-      iex> custom_merge = Twm.extend_tailwind_merge(
-      ...>   experimental_parse_class_name: fn %{class_name: class_name, parse_class_name: parse_class_name} ->
-      ...>     parse_class_name.(String.slice(class_name, 3..-1//1))
-      ...>   end
-      ...> )
-      iex> custom_merge.("barpx-2 foopy-1 lolp-3")
-      "p-3"
-
-  """
-  @spec extend_tailwind_merge(keyword()) :: (String.t() -> String.t())
-  def extend_tailwind_merge(options) when is_list(options) do
-    # Create a custom merge function with the extended configuration
-    fn classes ->
-      # Separate extend options from other options
-      {extend_options, other_options} = Keyword.split(options, [:extend])
-
-      # Use proper config extension logic for extend options
-      config =
-        case extend_options[:extend] do
-          nil -> Twm.Config.get_default()
-          extend_config -> Twm.Config.extend(extend: extend_config)
-        end
-
-      # Merge other options directly (for experimental_parse_class_name, etc.)
-      final_config = Keyword.merge(config, other_options)
-
-      # Perform the merge with the custom config
-      if is_binary(classes) do
-        merge_with_config(classes, final_config)
-      else
-        classes
-        |> List.wrap()
-        |> Enum.join(" ")
-        |> merge_with_config(config)
-      end
-    end
-  end
-
   # Private helper function to flatten nested arrays and filter out nil/false values
   defp flatten_and_filter_classes(classes) do
     classes
@@ -135,14 +99,5 @@ defmodule Twm do
       class when is_binary(class) -> true
       _ -> false
     end)
-  end
-
-  # Private helper to merge classes with a specific configuration
-  defp merge_with_config(classes, config) when is_binary(classes) do
-    if classes == "" do
-      ""
-    else
-      Twm.Merger.merge_classes(classes, config)
-    end
   end
 end

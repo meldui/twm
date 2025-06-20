@@ -28,8 +28,7 @@ defmodule TwmBenchmark do
     Benchee.run(
       %{
         "init" => fn ->
-          custom_merge = Twm.extend_tailwind_merge([])
-          custom_merge.("")
+          Twm.merge("")
         end,
         "simple" => fn ->
           run_with_cache(fn -> Twm.merge("flex mx-10 px-10 mr-5 pr-5") end)
@@ -55,30 +54,10 @@ defmodule TwmBenchmark do
           end)
         end,
         "collection without cache" => fn ->
-          run_without_cache(fn ->
-            config = Twm.Config.get_default()
-
-            Enum.each(prepared_data, fn class_string ->
-              Twm.Merger.merge_classes(class_string, config)
-            end)
-          end)
-        end,
-        "extend_tailwind_merge (no global cache)" => fn ->
-          # extend_tailwind_merge creates functions that bypass global cache
-          # and directly use Twm.Merger.merge_classes - same performance as no-cache
-          custom_merge = Twm.extend_tailwind_merge([])
+          config = Twm.Config.get_default()
 
           Enum.each(prepared_data, fn class_string ->
-            custom_merge.(class_string)
-          end)
-        end,
-        "extend_tailwind_merge (cache_size param)" => fn ->
-          # extend_tailwind_merge with cache_size parameter
-          # Currently not implemented to create internal cache, same as above
-          custom_merge = Twm.extend_tailwind_merge(cache_size: 1000)
-
-          Enum.each(prepared_data, fn class_string ->
-            custom_merge.(class_string)
+            Twm.Merger.merge_classes(class_string, config)
           end)
         end
       },
@@ -110,7 +89,7 @@ defmodule TwmBenchmark do
       {:error, reason} ->
         IO.puts("Failed to read benchmark data file: #{inspect(reason)}")
         IO.puts("Using fallback test data...")
-        get_fallback_test_data()
+        raise "Failed to read benchmark data file"
     end
   end
 
@@ -153,7 +132,7 @@ defmodule TwmBenchmark do
   defp start_cache_if_needed do
     case Process.whereis(Twm.Cache) do
       nil ->
-        case Twm.Cache.start_link(cache_size: 1000) do
+        case Twm.Cache.start_link(Twm.Config.get_default()) do
           {:ok, _pid} -> :ok
           {:error, {:already_started, _pid}} -> :ok
           _error -> :ok
@@ -174,45 +153,6 @@ defmodule TwmBenchmark do
         :timer.sleep(50)
         :ok
     end
-  end
-
-  defp get_fallback_test_data do
-    [
-      [
-        "font-medium text-sm leading-16",
-        "group/button relative isolate items-center justify-center overflow-hidden rounded-md outline-none transition [-webkit-app-region:no-drag] focus-visible:ring focus-visible:ring-primary",
-        "inline-flex",
-        "bg-primary-50 ring ring-primary-200",
-        "text-primary dark:text-primary-900 hover:bg-primary-100",
-        false,
-        "font-medium text-sm leading-16 gap-4 px-6 py-4",
-        nil,
-        "p-0 size-24",
-        nil
-      ],
-      [
-        "relative isolate flex items-center rounded-md transition",
-        "focus-within:ring focus-within:!ring-primary",
-        "bg-base-bg-elevated dark:bg-base-bg ring ring-contrast-10",
-        "hover:ring-contrast-20",
-        nil,
-        "mb-8 mx-6"
-      ],
-      ["flex-none absolute left-0 ml-6 pointer-events-none", "text-contrast-50"],
-      [
-        "font-medium text-sm leading-16",
-        "w-full text-ellipsis bg-transparent px-8 py-6 outline-none placeholder:text-ellipsis placeholder:text-contrast-50",
-        "pl-28",
-        nil,
-        nil
-      ],
-      [
-        "whitespace-nowrap align-baseline",
-        "text-[0.625rem] tracking-[0.01em] font-normal",
-        ["leading-[1.1em]", nil],
-        "mr-6 flex-none cursor-text"
-      ]
-    ]
   end
 end
 

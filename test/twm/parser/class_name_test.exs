@@ -101,9 +101,9 @@ defmodule Twm.Parser.ClassNameTest do
   end
 
   describe "create_parse_class_name/1" do
-    test "creates a function that parses class names" do
-      parse_fn = ClassName.create_parse_class_name([])
-      result = parse_fn.("hover:text-red-500")
+    test "creates a context that parses class names" do
+      context = ClassName.create_parse_class_name([])
+      result = ClassName.parse_class_name("hover:text-red-500", context)
 
       assert result == %{
                is_external: false,
@@ -115,10 +115,10 @@ defmodule Twm.Parser.ClassNameTest do
     end
 
     test "handles prefix when configured" do
-      parse_fn = ClassName.create_parse_class_name(prefix: "tw")
+      context = ClassName.create_parse_class_name(prefix: "tw")
 
       # When prefix matches
-      result = parse_fn.("tw:hover:text-red-500")
+      result = ClassName.parse_class_name("tw:hover:text-red-500", context)
 
       assert result == %{
                is_external: false,
@@ -129,13 +129,13 @@ defmodule Twm.Parser.ClassNameTest do
              }
 
       # When prefix doesn't match
-      result = parse_fn.("twm:text-red-500")
+      result = ClassName.parse_class_name("hover:text-red-500", context)
 
       assert result == %{
                is_external: true,
                modifiers: [],
                has_important_modifier: false,
-               base_class_name: "twm:text-red-500",
+               base_class_name: "hover:text-red-500",
                maybe_postfix_modifier_position: nil
              }
     end
@@ -150,10 +150,10 @@ defmodule Twm.Parser.ClassNameTest do
         }
       end
 
-      parse_fn =
+      context =
         ClassName.create_parse_class_name(experimental_parse_class_name: experimental_fn)
 
-      result = parse_fn.("text-red-500")
+      result = ClassName.parse_class_name("text-red-500", context)
 
       assert result == %{
                modifiers: ["experimental"],

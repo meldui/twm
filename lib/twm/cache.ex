@@ -43,8 +43,6 @@ defmodule Twm.Cache do
   use GenServer
   require Logger
 
-  @default_cache_size 500
-
   # Client API
 
   @doc """
@@ -58,9 +56,9 @@ defmodule Twm.Cache do
   @spec start_link(keyword()) :: GenServer.on_start()
   def start_link(opts \\ []) do
     name = Keyword.get(opts, :name, __MODULE__)
-    cache_size = Keyword.get(opts, :cache_size, @default_cache_size)
+    config = Keyword.get(opts, :config, Twm.Config.get_default())
 
-    GenServer.start_link(__MODULE__, cache_size, name: name)
+    GenServer.start_link(__MODULE__, %{config: config, config_cache_name: name}, name: name)
   end
 
   @doc """
@@ -282,17 +280,60 @@ defmodule Twm.Cache do
     end
   end
 
+  def get_config(name \\ __MODULE__) do
+    # {:error, "Config not found in cache"}
+    safe_ets_lookup(fn ->
+      case :ets.lookup(name, :config) do
+        [{:config, config}] ->
+          {:ok, config}
+
+        [] ->
+          {:error, "Config not found in cache"}
+      end
+    end)
+  end
+
+  def get_class_group_utils(name \\ __MODULE__) do
+    # {:error, "Class group utils not found in cache"}
+    safe_ets_lookup(fn ->
+      case :ets.lookup(name, :class_group_utils) do
+        [{:class_group_utils, class_group_utils}] ->
+          {:ok, class_group_utils}
+
+        [] ->
+          {:error, "Class group utils not found in cache"}
+      end
+    end)
+  end
+
+  defp safe_ets_lookup(func) do
+    try do
+      func.()
+    rescue
+      ArgumentError -> {:error, "Cache not initialized"}
+    end
+  end
+
   # Server Callbacks
 
   @impl true
-  def init(cache_size) do
+  def init(%{config: config, config_cache_name: name}) do
     # State structure:
     # %{
     #   entries: %{key => value},        # Map of cached key-value pairs
     #   access_order: [key1, key2, ...], # List with most recently used keys first
     #   max_size: cache_size             # Maximum number of entries
     # }
-    {:ok, %{entries: %{}, access_order: [], max_size: cache_size}}
+    :ets.new(name, [:named_table, :protected, :set, read_concurrency: true])
+
+    :ets.insert(name, {:config, config})
+
+    :ets.insert(
+      name,
+      {:class_group_utils, Twm.ClassGroupUtils.create_class_group_utils(config)}
+    )
+
+    {:ok, %{entries: %{}, access_order: [], max_size: config[:cache_size]}}
   end
 
   @impl true

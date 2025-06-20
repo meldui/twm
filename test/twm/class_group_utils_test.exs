@@ -13,10 +13,12 @@ defmodule Twm.ClassGroupUtilsTest do
         theme: []
       ]
 
-      utils = ClassGroupUtils.create_class_group_utils(config)
+      context = ClassGroupUtils.create_class_group_utils(config)
 
-      assert is_function(utils.get_class_group_id, 1)
-      assert is_function(utils.get_conflicting_class_group_ids, 2)
+      assert %Twm.Context.ClassGroupProcessingContext{} = context
+      assert is_list(context.class_map)
+      assert is_list(context.conflicting_class_groups)
+      assert is_list(context.conflicting_class_group_modifiers)
     end
 
     test "get_class_group_id function works with simple classes" do
@@ -30,14 +32,14 @@ defmodule Twm.ClassGroupUtilsTest do
         theme: []
       ]
 
-      utils = ClassGroupUtils.create_class_group_utils(config)
+      context = ClassGroupUtils.create_class_group_utils(config)
 
-      assert utils.get_class_group_id.("block") == "display"
-      assert utils.get_class_group_id.("inline") == "display"
-      assert utils.get_class_group_id.("flex") == "display"
-      assert utils.get_class_group_id.("static") == "position"
-      assert utils.get_class_group_id.("relative") == "position"
-      assert utils.get_class_group_id.("unknown") == nil
+      assert ClassGroupUtils.get_class_group_id("block", context) == "display"
+      assert ClassGroupUtils.get_class_group_id("inline", context) == "display"
+      assert ClassGroupUtils.get_class_group_id("flex", context) == "display"
+      assert ClassGroupUtils.get_class_group_id("static", context) == "position"
+      assert ClassGroupUtils.get_class_group_id("relative", context) == "position"
+      assert ClassGroupUtils.get_class_group_id("unknown", context) == nil
     end
 
     test "get_conflicting_class_group_ids function works" do
@@ -53,13 +55,23 @@ defmodule Twm.ClassGroupUtilsTest do
         theme: []
       ]
 
-      utils = ClassGroupUtils.create_class_group_utils(config)
+      context = ClassGroupUtils.create_class_group_utils(config)
 
-      assert utils.get_conflicting_class_group_ids.("display", false) == ["position"]
-      assert utils.get_conflicting_class_group_ids.("position", false) == ["display", "float"]
-      assert utils.get_conflicting_class_group_ids.("font_size", true) == ["leading"]
-      assert utils.get_conflicting_class_group_ids.("font_size", false) == []
-      assert utils.get_conflicting_class_group_ids.("unknown", false) == []
+      assert ClassGroupUtils.get_conflicting_class_group_ids("display", false, context) == [
+               "position"
+             ]
+
+      assert ClassGroupUtils.get_conflicting_class_group_ids("position", false, context) == [
+               "display",
+               "float"
+             ]
+
+      assert ClassGroupUtils.get_conflicting_class_group_ids("font_size", true, context) == [
+               "leading"
+             ]
+
+      assert ClassGroupUtils.get_conflicting_class_group_ids("font_size", false, context) == []
+      assert ClassGroupUtils.get_conflicting_class_group_ids("unknown", false, context) == []
     end
   end
 
@@ -208,40 +220,40 @@ defmodule Twm.ClassGroupUtilsTest do
         theme: []
       ]
 
-      utils = ClassGroupUtils.create_class_group_utils(config)
-      {:ok, utils: utils}
+      context = ClassGroupUtils.create_class_group_utils(config)
+      {:ok, context: context}
     end
 
-    test "identifies simple classes", %{utils: utils} do
-      assert utils.get_class_group_id.("block") == "display"
-      assert utils.get_class_group_id.("flex") == "display"
-      assert utils.get_class_group_id.("grid") == "display"
+    test "identifies simple classes", %{context: context} do
+      assert ClassGroupUtils.get_class_group_id("block", context) == "display"
+      assert ClassGroupUtils.get_class_group_id("inline", context) == "display"
+      assert ClassGroupUtils.get_class_group_id("grid", context) == "display"
     end
 
-    test "identifies hyphenated classes", %{utils: utils} do
-      assert utils.get_class_group_id.("p-1") == "spacing"
-      assert utils.get_class_group_id.("p-2") == "spacing"
-      assert utils.get_class_group_id.("m-1") == "spacing"
+    test "identifies hyphenated classes", %{context: context} do
+      assert ClassGroupUtils.get_class_group_id("p-1", context) == "spacing"
+      assert ClassGroupUtils.get_class_group_id("p-2", context) == "spacing"
+      assert ClassGroupUtils.get_class_group_id("m-1", context) == "spacing"
     end
 
-    test "identifies nested classes", %{utils: utils} do
-      assert utils.get_class_group_id.("w-full") == "layout"
-      assert utils.get_class_group_id.("w-1/2") == "layout"
-      assert utils.get_class_group_id.("h-full") == "layout"
-      assert utils.get_class_group_id.("h-screen") == "layout"
+    test "identifies nested classes", %{context: context} do
+      assert ClassGroupUtils.get_class_group_id("w-full", context) == "layout"
+      assert ClassGroupUtils.get_class_group_id("h-screen", context) == "layout"
+      assert ClassGroupUtils.get_class_group_id("h-full", context) == "layout"
+      assert ClassGroupUtils.get_class_group_id("w-1/2", context) == "layout"
     end
 
-    test "identifies classes via validators", %{utils: utils} do
-      assert utils.get_class_group_id.("bg-blue-500") == "colors"
-      assert utils.get_class_group_id.("text-red-500") == "colors"
-      assert utils.get_class_group_id.("border-green-500") == "colors"
+    test "identifies classes via validators", %{context: context} do
+      assert ClassGroupUtils.get_class_group_id("bg-red-500", context) == "colors"
+      assert ClassGroupUtils.get_class_group_id("text-blue-500", context) == "colors"
+      assert ClassGroupUtils.get_class_group_id("border-green-500", context) == "colors"
     end
 
-    test "returns nil for unknown classes", %{utils: utils} do
-      assert utils.get_class_group_id.("unknown") == nil
-      assert utils.get_class_group_id.("not-a-class") == nil
+    test "returns nil for unmatched classes", %{context: context} do
+      assert ClassGroupUtils.get_class_group_id("unknown-class", context) == nil
+      assert ClassGroupUtils.get_class_group_id("random", context) == nil
       # Doesn't end with -500
-      assert utils.get_class_group_id.("bg-blue-400") == nil
+      assert ClassGroupUtils.get_class_group_id("bg-blue-400", context) == nil
     end
 
     test "handles negative classes" do
@@ -255,9 +267,10 @@ defmodule Twm.ClassGroupUtilsTest do
         theme: []
       ]
 
-      utils = ClassGroupUtils.create_class_group_utils(config)
-      assert utils.get_class_group_id.("-m-1") == "spacing"
-      assert utils.get_class_group_id.("-p-1") == "spacing"
+      # context = ClassGroupUtils.create_class_group_utils(config |> Twm.Config.update_class_map())
+      context = ClassGroupUtils.create_class_group_utils(config)
+      assert ClassGroupUtils.get_class_group_id("-m-1", context) == "spacing"
+      assert ClassGroupUtils.get_class_group_id("-p-1", context) == "spacing"
     end
   end
 
@@ -270,11 +283,12 @@ defmodule Twm.ClassGroupUtilsTest do
         theme: []
       ]
 
-      utils = ClassGroupUtils.create_class_group_utils(config)
+      context = ClassGroupUtils.create_class_group_utils(config)
 
-      assert utils.get_class_group_id.("[color:red]") == "arbitrary..color"
-      assert utils.get_class_group_id.("[background-color:blue]") == "arbitrary..background-color"
-      assert utils.get_class_group_id.("[font-size:16px]") == "arbitrary..font-size"
+      assert ClassGroupUtils.get_class_group_id("[color:red]", context) == "arbitrary..color"
+
+      assert ClassGroupUtils.get_class_group_id("[font-size:14px]", context) ==
+               "arbitrary..font-size"
     end
 
     test "ignores malformed arbitrary properties" do
@@ -285,11 +299,11 @@ defmodule Twm.ClassGroupUtilsTest do
         theme: []
       ]
 
-      utils = ClassGroupUtils.create_class_group_utils(config)
+      context = ClassGroupUtils.create_class_group_utils(config)
 
-      assert utils.get_class_group_id.("[invalid]") == nil
-      assert utils.get_class_group_id.("[no-colon]") == nil
-      assert utils.get_class_group_id.("not-brackets") == nil
+      assert ClassGroupUtils.get_class_group_id("[invalid]", context) == nil
+      assert ClassGroupUtils.get_class_group_id("[no-colon]", context) == nil
+      assert ClassGroupUtils.get_class_group_id("not-brackets", context) == nil
     end
   end
 
@@ -305,10 +319,16 @@ defmodule Twm.ClassGroupUtilsTest do
         theme: []
       ]
 
-      utils = ClassGroupUtils.create_class_group_utils(config)
+      context = ClassGroupUtils.create_class_group_utils(config)
 
-      assert utils.get_conflicting_class_group_ids.("display", false) == ["position", "float"]
-      assert utils.get_conflicting_class_group_ids.("position", false) == ["display"]
+      assert ClassGroupUtils.get_conflicting_class_group_ids("display", false, context) == [
+               "position",
+               "float"
+             ]
+
+      assert ClassGroupUtils.get_conflicting_class_group_ids("position", false, context) == [
+               "display"
+             ]
     end
 
     test "returns conflicts with postfix modifier" do
@@ -323,11 +343,13 @@ defmodule Twm.ClassGroupUtilsTest do
         theme: []
       ]
 
-      utils = ClassGroupUtils.create_class_group_utils(config)
+      context = ClassGroupUtils.create_class_group_utils(config)
 
-      assert utils.get_conflicting_class_group_ids.("font_size", false) == ["leading"]
+      assert ClassGroupUtils.get_conflicting_class_group_ids("font_size", false, context) == [
+               "leading"
+             ]
 
-      assert utils.get_conflicting_class_group_ids.("font_size", true) == [
+      assert ClassGroupUtils.get_conflicting_class_group_ids("font_size", true, context) == [
                "leading",
                "line_height"
              ]
@@ -341,10 +363,10 @@ defmodule Twm.ClassGroupUtilsTest do
         theme: []
       ]
 
-      utils = ClassGroupUtils.create_class_group_utils(config)
+      context = ClassGroupUtils.create_class_group_utils(config)
 
-      assert utils.get_conflicting_class_group_ids.("unknown", false) == []
-      assert utils.get_conflicting_class_group_ids.("unknown", true) == []
+      assert ClassGroupUtils.get_conflicting_class_group_ids("unknown", false, context) == []
+      assert ClassGroupUtils.get_conflicting_class_group_ids("unknown", true, context) == []
     end
   end
 
@@ -370,15 +392,15 @@ defmodule Twm.ClassGroupUtilsTest do
         theme: []
       ]
 
-      utils = ClassGroupUtils.create_class_group_utils(config)
+      context = ClassGroupUtils.create_class_group_utils(config)
 
-      assert utils.get_class_group_id.("auto") == "spacing"
-      assert utils.get_class_group_id.("42") == "spacing"
-      assert utils.get_class_group_id.("p-1") == "spacing"
-      assert utils.get_class_group_id.("p-2") == "spacing"
-      assert utils.get_class_group_id.("p-42") == "spacing"
-      assert utils.get_class_group_id.("m-auto") == "spacing"
-      assert utils.get_class_group_id.("m-42") == "spacing"
+      assert ClassGroupUtils.get_class_group_id("auto", context) == "spacing"
+      assert ClassGroupUtils.get_class_group_id("p-1", context) == "spacing"
+      assert ClassGroupUtils.get_class_group_id("m-auto", context) == "spacing"
+      assert ClassGroupUtils.get_class_group_id("p-2", context) == "spacing"
+      assert ClassGroupUtils.get_class_group_id("p-42", context) == "spacing"
+      assert ClassGroupUtils.get_class_group_id("42", context) == "spacing"
+      assert ClassGroupUtils.get_class_group_id("m-42", context) == "spacing"
     end
 
     test "validates with multiple validators" do
@@ -399,13 +421,13 @@ defmodule Twm.ClassGroupUtilsTest do
         theme: []
       ]
 
-      utils = ClassGroupUtils.create_class_group_utils(config)
+      context = ClassGroupUtils.create_class_group_utils(config)
 
-      assert utils.get_class_group_id.("42") == "width"
-      assert utils.get_class_group_id.("1/2") == "width"
-      assert utils.get_class_group_id.("full") == "width"
-      assert utils.get_class_group_id.("auto") == "width"
-      assert utils.get_class_group_id.("invalid") == nil
+      assert ClassGroupUtils.get_class_group_id("42", context) == "width"
+      assert ClassGroupUtils.get_class_group_id("1/2", context) == "width"
+      assert ClassGroupUtils.get_class_group_id("full", context) == "width"
+      assert ClassGroupUtils.get_class_group_id("auto", context) == "width"
+      assert ClassGroupUtils.get_class_group_id("invalid", context) == nil
     end
   end
 
@@ -415,21 +437,22 @@ defmodule Twm.ClassGroupUtilsTest do
         class_groups: [],
         conflicting_class_groups: [],
         conflicting_class_group_modifiers: [],
-        theme: []
+        theme: [],
+        class_map: []
       ]
 
-      utils = ClassGroupUtils.create_class_group_utils(config)
+      context = ClassGroupUtils.create_class_group_utils(config)
 
-      assert utils.get_class_group_id.("anything") == nil
+      assert ClassGroupUtils.get_class_group_id("block", context) == nil
     end
 
     test "handles missing config keys" do
       config = []
 
-      utils = ClassGroupUtils.create_class_group_utils(config)
+      context = ClassGroupUtils.create_class_group_utils(config)
 
-      assert utils.get_class_group_id.("block") == nil
-      assert utils.get_conflicting_class_group_ids.("display", false) == []
+      assert ClassGroupUtils.get_class_group_id("block", context) == nil
+      assert ClassGroupUtils.get_conflicting_class_group_ids("display", false, context) == []
     end
 
     test "handles deeply nested classes" do
@@ -450,9 +473,9 @@ defmodule Twm.ClassGroupUtilsTest do
         theme: []
       ]
 
-      utils = ClassGroupUtils.create_class_group_utils(config)
+      context = ClassGroupUtils.create_class_group_utils(config)
 
-      assert utils.get_class_group_id.("level1-level2-level3-deep") == "complex"
+      assert ClassGroupUtils.get_class_group_id("level1-level2-level3-deep", context) == "complex"
     end
 
     test "handles class names with multiple hyphens" do
@@ -465,10 +488,10 @@ defmodule Twm.ClassGroupUtilsTest do
         theme: []
       ]
 
-      utils = ClassGroupUtils.create_class_group_utils(config)
+      context = ClassGroupUtils.create_class_group_utils(config)
 
-      assert utils.get_class_group_id.("space-x-reverse") == "spacing"
-      assert utils.get_class_group_id.("space-y-reverse") == "spacing"
+      assert ClassGroupUtils.get_class_group_id("space-x-reverse", context) == "spacing"
+      assert ClassGroupUtils.get_class_group_id("space-y-reverse", context) == "spacing"
     end
   end
 end

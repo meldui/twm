@@ -20,7 +20,7 @@ defmodule Twm.ClassMapTest do
 
   This port makes the following adaptations:
   1. Uses ExUnit instead of vitest for testing
-  2. Calls `Twm.Config.Default.get()` instead of `getDefaultConfig()`
+  2. Calls `Twm.Config.get_default()` instead of `getDefaultConfig()`
   3. Uses `Twm.ClassGroupUtils.create_class_map/1` instead of `createClassMap`
   4. Converts JavaScript objects to Elixir maps
   5. Uses MapSet for collecting unique class groups
@@ -32,6 +32,7 @@ defmodule Twm.ClassMapTest do
 
   use ExUnit.Case, async: true
 
+  alias Twm.Config
   alias Twm.Config.Default
   alias Twm.ClassGroupUtils
 
@@ -40,7 +41,7 @@ defmodule Twm.ClassMapTest do
       # This test mirrors the original TypeScript test structure but adapts for
       # the current Elixir implementation. It verifies that the class map
       # correctly organizes Tailwind utilities by their first part.
-      class_map = ClassGroupUtils.create_class_map(Default.get())
+      class_map = ClassGroupUtils.create_class_map(Config.get_default())
 
       next_part = Keyword.get(class_map, :next_part, [])
 
@@ -210,7 +211,7 @@ defmodule Twm.ClassMapTest do
       # This test ensures our Elixir implementation produces a mapping structure
       # that is functionally equivalent to the original TypeScript version.
       # While the exact output may differ, the essential functionality must be preserved.
-      class_map = ClassGroupUtils.create_class_map(Default.get())
+      class_map = ClassGroupUtils.create_class_map(Config.get_default())
 
       next_part = Keyword.get(class_map, :next_part, [])
 
@@ -373,7 +374,7 @@ defmodule Twm.ClassMapTest do
     end
 
     test "class map structure integrity" do
-      class_map = ClassGroupUtils.create_class_map(Default.get())
+      class_map = ClassGroupUtils.create_class_map(Config.get_default())
 
       # Verify the basic structure
       assert is_list(class_map)

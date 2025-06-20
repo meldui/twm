@@ -5,8 +5,8 @@ defmodule Twm.ThemeTest do
 
   describe "theme scale extension" do
     test "theme scale can be extended" do
-      custom_merge =
-        Twm.extend_tailwind_merge(
+      config =
+        Twm.Config.extend(
           extend: [
             theme: [
               spacing: ["my-space"],
@@ -15,17 +15,17 @@ defmodule Twm.ThemeTest do
           ]
         )
 
-      assert custom_merge.("p-3 p-my-space p-my-margin") == "p-my-space p-my-margin"
+      assert Twm.merge("p-3 p-my-space p-my-margin", config) == "p-my-space p-my-margin"
 
-      assert custom_merge.("leading-3 leading-my-space leading-my-leading") ==
+      assert Twm.merge("leading-3 leading-my-space leading-my-leading", config) ==
                "leading-my-leading"
     end
   end
 
   describe "theme object extension" do
     test "theme object can be extended" do
-      custom_merge =
-        Twm.extend_tailwind_merge(
+      config =
+        Twm.Config.extend(
           extend: [
             theme: [
               "my-theme": ["hallo", "hello"]
@@ -36,8 +36,8 @@ defmodule Twm.ThemeTest do
           ]
         )
 
-      assert custom_merge.("p-3 p-hello p-hallo") == "p-3 p-hello p-hallo"
-      assert custom_merge.("px-3 px-hello px-hallo") == "px-hallo"
+      assert Twm.merge("p-3 p-hello p-hallo", config) == "p-3 p-hello p-hallo"
+      assert Twm.merge("px-3 px-hello px-hallo", config) == "px-hallo"
     end
   end
 

@@ -3,23 +3,23 @@ defmodule Twm.PrefixesTest do
 
   describe "prefix working correctly" do
     test "merges prefixed classes correctly" do
-      tw_merge = Twm.extend_tailwind_merge(prefix: "tw")
+      config = Twm.Config.extend(prefix: "tw")
 
-      assert tw_merge.("tw:block tw:hidden") == "tw:hidden"
-      assert tw_merge.("block hidden") == "block hidden"
+      assert Twm.merge("tw:block tw:hidden", config) == "tw:hidden"
+      assert Twm.merge("block hidden", config) == "block hidden"
     end
 
     test "merges prefixed padding classes correctly" do
-      tw_merge = Twm.extend_tailwind_merge(prefix: "tw")
+      config = Twm.Config.extend(prefix: "tw")
 
-      assert tw_merge.("tw:p-3 tw:p-2") == "tw:p-2"
-      assert tw_merge.("p-3 p-2") == "p-3 p-2"
+      assert Twm.merge("tw:p-3 tw:p-2", config) == "tw:p-2"
+      assert Twm.merge("p-3 p-2", config) == "p-3 p-2"
     end
 
     test "merges prefixed important classes correctly" do
-      tw_merge = Twm.extend_tailwind_merge(prefix: "tw")
+      config = Twm.Config.extend(prefix: "tw")
 
-      assert tw_merge.("tw:right-0! tw:inset-0!") == "tw:inset-0!"
+      assert Twm.merge("tw:right-0! tw:inset-0!", config) == "tw:inset-0!"
     end
 
     test "merges prefixed hover and focus classes correctly" do

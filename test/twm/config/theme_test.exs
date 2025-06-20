@@ -12,7 +12,6 @@ defmodule Twm.Config.ThemeTest do
       assert %Theme.ThemeGetter{} = theme_getter
       assert theme_getter.key == :spacing
       assert theme_getter.is_theme_getter == true
-      assert is_function(theme_getter.getter_fn, 1)
     end
 
     test "returns a ThemeGetter struct for atom keys" do
@@ -21,7 +20,6 @@ defmodule Twm.Config.ThemeTest do
       assert %Theme.ThemeGetter{} = theme_getter
       assert theme_getter.key == :color
       assert theme_getter.is_theme_getter == true
-      assert is_function(theme_getter.getter_fn, 1)
     end
 
     test "converts string keys to atoms" do

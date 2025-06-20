@@ -32,15 +32,15 @@ defmodule Twm.Config.ThemeIntegrationTest do
       ]
 
       # Create class group utils
-      utils = ClassGroupUtils.create_class_group_utils(config)
+      context = ClassGroupUtils.create_class_group_utils(config)
 
-      # Test that the function is created successfully
-      assert is_function(utils.get_class_group_id)
+      # Test that the context is created successfully
+      assert %Twm.Context.ClassGroupProcessingContext{} = context
 
       # Test that classes from the theme are recognized
       # Note: This would depend on the full implementation of class group processing
-      # For now, we're just testing that the utils are created without errors
-      assert is_map(utils)
+      # For now, we're just testing that the context is created without errors
+      assert is_list(context.class_map)
     end
 
     test "theme getters can be mixed with other class definitions" do

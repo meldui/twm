@@ -5,7 +5,7 @@ defmodule Twm.DefaultConfigTest do
 
   describe "default_config" do
     test "has correct structure and values" do
-      default_config = Default.get()
+      default_config = Twm.Config.get_default()
 
       # Check static configuration values
       assert default_config[:cache_size] == 500
@@ -58,7 +58,7 @@ defmodule Twm.DefaultConfigTest do
 
     test "can be validated" do
       # Valid config
-      assert {:ok, _} = Config.validate(Default.get())
+      assert {:ok, _} = Config.validate(Config.get_default())
 
       # Invalid config (missing required keys)
       assert {:error, message} = Config.validate([])
@@ -68,7 +68,7 @@ defmodule Twm.DefaultConfigTest do
 
   describe "theme" do
     test "has all required theme scales" do
-      theme = Default.get()[:theme]
+      theme = Twm.Config.get_default()[:theme]
 
       theme_keys = [
         :color,

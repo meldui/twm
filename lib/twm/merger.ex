@@ -34,22 +34,31 @@ defmodule Twm.Merger do
     else
       class_list = String.split(classes, ~r/\s+/, trim: true)
 
-      # Create class group utilities for the config
-      class_utils = ClassGroupUtils.create_class_group_utils(config)
+      class_utils_context =
+        case Twm.Cache.get_class_group_utils() do
+          {:ok, class_group_utils} ->
+            class_group_utils
 
-      # Create class name parser for the config
-      parse_class_name = ClassName.create_parse_class_name(config)
+          {:error, _} ->
+            ClassGroupUtils.create_class_group_utils(config)
+        end
+
+      # Create class name parser context for the config
+      parse_class_name_context = ClassName.create_parse_class_name(config)
 
       # Parse classes and merge conflicts
-      merge_class_list(class_list, class_utils, parse_class_name, config)
+      merge_class_list(class_list, class_utils_context, parse_class_name_context, config)
     end
   end
 
-  # Merge a list of classes using the class utilities
-  defp merge_class_list(class_list, class_utils, parse_class_name, config) do
+  # Merge a list of classes using the class utilities context
+  defp merge_class_list(class_list, class_utils_context, parse_class_name_context, config) do
     # Parse each class and track conflicts
     parsed_classes =
-      Enum.map(class_list, &parse_class_with_modifiers(&1, class_utils, parse_class_name, config))
+      Enum.map(
+        class_list,
+        &parse_class_with_modifiers(&1, class_utils_context, parse_class_name_context, config)
+      )
 
     # Group by conflict keys and handle conflicting class groups
     result_map =
@@ -61,14 +70,18 @@ defmodule Twm.Merger do
         important = parsed_info.important
 
         # Create the primary conflict key for this class
-        conflict_key = get_conflict_key(parsed_info, class_utils)
+        conflict_key = get_conflict_key(parsed_info, class_utils_context)
 
         # Get all conflicting class group IDs
         has_postfix_modifier = Map.get(parsed_info, :has_postfix_modifier, false)
 
         conflicting_groups =
           if class_group_id do
-            class_utils.get_conflicting_class_group_ids.(class_group_id, has_postfix_modifier)
+            ClassGroupUtils.get_conflicting_class_group_ids(
+              class_group_id,
+              has_postfix_modifier,
+              class_utils_context
+            )
           else
             []
           end
@@ -95,12 +108,12 @@ defmodule Twm.Merger do
   end
 
   # Parse a class with its modifiers and important flag
-  defp parse_class_with_modifiers(class, class_utils, parse_class_name, config) do
+  defp parse_class_with_modifiers(class, class_utils_context, parse_class_name_context, config) do
     # First, try to get the class group ID from the original class
-    original_class_group_id = class_utils.get_class_group_id.(class)
+    original_class_group_id = ClassGroupUtils.get_class_group_id(class, class_utils_context)
 
-    # Use the experimental parser if available, otherwise fall back to basic parsing
-    parsed_class_name = parse_class_name.(class)
+    # Use the context-based parser
+    parsed_class_name = ClassName.parse_class_name(class, parse_class_name_context)
 
     # Check if we're using an experimental parser by comparing with basic parsing
     basic_parsed = ClassName.do_parse_class_name(class)
@@ -126,7 +139,8 @@ defmodule Twm.Merger do
       has_postfix_modifier = Map.get(parsed_class_name, :maybe_postfix_modifier_position) != nil
 
       # Get class group ID based on the base class (which may have been transformed)
-      transformed_class_group_id = class_utils.get_class_group_id.(base_class)
+      transformed_class_group_id =
+        ClassGroupUtils.get_class_group_id(base_class, class_utils_context)
 
       # Use original class group ID if the transformed class isn't recognized
       # This preserves conflict resolution for experimental parsers
@@ -230,7 +244,7 @@ defmodule Twm.Merger do
   end
 
   # Get a unique conflict key for a parsed class
-  defp get_conflict_key(parsed_info, _class_utils) do
+  defp get_conflict_key(parsed_info, _class_utils_context) do
     %{
       class_group_id: class_group_id,
       modifiers: modifiers,
@@ -273,15 +287,13 @@ defmodule Twm.Merger do
 
   # Sort modifiers using proper SortModifiers logic with the provided config
   defp sort_modifiers_with_config(modifiers, config) do
-    sort_fn = SortModifiers.create_sort_modifiers(config)
+    sort_context = SortModifiers.create_sort_modifiers(config)
     # Check if this is a case where wildcard position matters for conflicts
     if Enum.any?(modifiers, &(&1 == "*")) && wildcard_position_affects_conflicts?(modifiers) do
       modifiers
     else
       # Use proper sorting logic for wildcards in same relative position
-      sort_fn.(modifiers)
+      SortModifiers.sort_modifiers(modifiers, sort_context)
     end
-
-    # sort_fn.(modifiers)
   end
 end

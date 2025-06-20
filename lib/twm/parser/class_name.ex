@@ -7,63 +7,79 @@ defmodule Twm.Parser.ClassName do
   """
 
   alias Twm.Types
+  alias Twm.Context.ClassParsingContext
 
   @important_modifier "!"
   @modifier_separator ":"
   @modifier_separator_length String.length(@modifier_separator)
 
   @doc """
-  Creates a function for parsing class names based on the provided configuration.
+  Creates a context for parsing class names based on the provided configuration.
 
   ## Parameters
 
-  * `config` - A map containing configuration options like prefix and experimental parser
+  * `config` - A keyword list containing configuration options like prefix and experimental parser
 
   ## Returns
 
-  * A function that accepts a class name string and returns a parsed class name map
+  * A Context struct containing the parsing configuration
   """
-  @spec create_parse_class_name(Types.config()) :: (String.t() -> Types.parsed_class_name())
+  @spec create_parse_class_name(Types.config()) :: Context.t()
   def create_parse_class_name(config) do
     prefix = Keyword.get(config, :prefix)
     experimental_parse_class_name = Keyword.get(config, :experimental_parse_class_name)
 
-    parse_class_name = fn class_name ->
-      do_parse_class_name(class_name)
-    end
+    %ClassParsingContext{
+      prefix: prefix,
+      experimental_parse_class_name: experimental_parse_class_name
+    }
+  end
 
-    # Apply prefix handling if a prefix is configured
-    parse_class_name =
-      if prefix do
-        full_prefix = prefix <> @modifier_separator
+  @doc """
+  Parses a class name using the provided context.
 
-        fn class_name ->
-          if String.starts_with?(class_name, full_prefix) do
-            parse_class_name.(String.slice(class_name, String.length(full_prefix)..-1//1))
-          else
-            %{
-              is_external: true,
-              modifiers: [],
-              has_important_modifier: false,
-              base_class_name: class_name,
-              maybe_postfix_modifier_position: nil
-            }
-          end
-        end
-      else
-        parse_class_name
-      end
+  ## Parameters
 
-    # Apply experimental parser if configured
-    if experimental_parse_class_name do
-      fn class_name ->
-        experimental_parse_class_name.(%{
-          class_name: class_name,
-          parse_class_name: parse_class_name
-        })
-      end
+  * `class_name` - The class name string to parse
+  * `context` - The Context struct containing parsing configuration
+
+  ## Returns
+
+  * A map containing the parsed components of the class name
+  """
+  @spec parse_class_name(String.t(), ClassParsingContext.t()) :: Types.class_name_parsed()
+  def parse_class_name(class_name, %ClassParsingContext{} = context) do
+    # First check if experimental parser should be used
+    if context.experimental_parse_class_name do
+      context.experimental_parse_class_name.(%{
+        class_name: class_name,
+        parse_class_name: fn name -> parse_class_name_with_prefix(name, context) end
+      })
     else
-      parse_class_name
+      parse_class_name_with_prefix(class_name, context)
+    end
+  end
+
+  # Parse class name with prefix handling
+  defp parse_class_name_with_prefix(class_name, %ClassParsingContext{prefix: nil}) do
+    do_parse_class_name(class_name)
+  end
+
+  defp parse_class_name_with_prefix(class_name, %ClassParsingContext{prefix: prefix}) do
+    full_prefix = prefix <> @modifier_separator
+
+    if String.starts_with?(class_name, full_prefix) do
+      class_name
+      |> String.slice(String.length(full_prefix)..-1//1)
+      |> do_parse_class_name()
+    else
+      %{
+        is_external: true,
+        modifiers: [],
+        has_important_modifier: false,
+        base_class_name: class_name,
+        maybe_postfix_modifier_position: nil
+      }
     end
   end
 

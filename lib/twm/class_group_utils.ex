@@ -8,6 +8,8 @@ defmodule Twm.ClassGroupUtils do
   Uses keyword lists throughout for maintaining order.
   """
 
+  alias Twm.Context.ClassGroupProcessingContext
+
   @type class_part_object :: [
           next_part: keyword(),
           validators: list(class_validator_object()),
@@ -23,11 +25,11 @@ defmodule Twm.ClassGroupUtils do
   @arbitrary_property_regex ~r/^\[(.+)\]$/
 
   @doc """
-  Creates class group utility functions based on the provided configuration.
+  Creates class group utility context based on the provided configuration.
 
-  Returns a map containing:
-  - `get_class_group_id` - Function to get the class group ID for a class name
-  - `get_conflicting_class_group_ids` - Function to get conflicting groups
+  Returns a Context struct containing the necessary data for class group operations.
+  This replaces the previous approach of using anonymous functions that caused
+  memory pressure by capturing large data structures.
 
   ## Parameters
 
@@ -41,12 +43,12 @@ defmodule Twm.ClassGroupUtils do
       ...>   conflicting_class_group_modifiers: [],
       ...>   theme: []
       ...> ]
-      iex> utils = Twm.ClassGroupUtils.create_class_group_utils(config)
-      iex> utils.get_class_group_id.("block")
+      iex> context = Twm.ClassGroupUtils.create_class_group_utils(config)
+      iex> Twm.ClassGroupUtils.get_class_group_id("block", context)
       "display"
 
   """
-  @spec create_class_group_utils(keyword()) :: map()
+  @spec create_class_group_utils(keyword()) :: Context.t()
   def create_class_group_utils(config) do
     class_map = create_class_map(config)
     conflicting_class_groups = Keyword.get(config, :conflicting_class_groups, [])
@@ -54,23 +56,68 @@ defmodule Twm.ClassGroupUtils do
     conflicting_class_group_modifiers =
       Keyword.get(config, :conflicting_class_group_modifiers, [])
 
-    get_class_group_id = fn class_name ->
-      get_class_group_id(class_name, class_map)
-    end
+    %ClassGroupProcessingContext{
+      class_map: class_map,
+      conflicting_class_groups: conflicting_class_groups,
+      conflicting_class_group_modifiers: conflicting_class_group_modifiers
+    }
+  end
 
-    get_conflicting_class_group_ids = fn class_group_id, has_postfix_modifier ->
-      get_conflicting_class_group_ids(
+  @doc """
+  Gets the class group ID for a given class name using the context.
+
+  ## Parameters
+
+    * `class_name` - The class name to look up
+    * `context` - The Context struct containing class group data
+
+  ## Examples
+
+      iex> config = [class_groups: [display: ["block"]], theme: []]
+      iex> context = Twm.ClassGroupUtils.create_class_group_utils(config)
+      iex> Twm.ClassGroupUtils.get_class_group_id("block", context)
+      "display"
+
+  """
+  @spec get_class_group_id(String.t(), ClassGroupProcessingContext.t()) :: String.t() | nil
+  def get_class_group_id(class_name, %ClassGroupProcessingContext{class_map: class_map}) do
+    get_class_group_id_from_map(class_name, class_map)
+  end
+
+  @doc """
+  Gets the conflicting class group IDs for a given class group.
+
+  ## Parameters
+
+    * `class_group_id` - The class group ID to find conflicts for
+    * `has_postfix_modifier` - Whether the class has a postfix modifier
+    * `context` - The Context struct containing conflict data
+
+  ## Examples
+
+      iex> config = [
+      ...>   class_groups: [display: ["block"]],
+      ...>   conflicting_class_groups: [display: ["position"]],
+      ...>   conflicting_class_group_modifiers: []
+      ...> ]
+      iex> context = Twm.ClassGroupUtils.create_class_group_utils(config)
+      iex> Twm.ClassGroupUtils.get_conflicting_class_group_ids("display", false, context)
+      ["position"]
+
+  """
+  @spec get_conflicting_class_group_ids(String.t(), boolean(), ClassGroupProcessingContext.t()) ::
+          [String.t()]
+  def get_conflicting_class_group_ids(
         class_group_id,
         has_postfix_modifier,
-        conflicting_class_groups,
-        conflicting_class_group_modifiers
-      )
-    end
-
-    %{
-      get_class_group_id: get_class_group_id,
-      get_conflicting_class_group_ids: get_conflicting_class_group_ids
-    }
+        %ClassGroupProcessingContext{} = context
+      ) do
+    get_conflicting_class_group_ids_from_config(
+      class_group_id,
+      has_postfix_modifier,
+      context.conflicting_class_groups,
+      context.conflicting_class_group_modifiers
+    )
   end
 
   @doc """
@@ -107,7 +154,7 @@ defmodule Twm.ClassGroupUtils do
   end
 
   # Gets the class group ID for a given class name using the class map
-  defp get_class_group_id(class_name, class_map) do
+  defp get_class_group_id_from_map(class_name, class_map) do
     # Check for arbitrary properties first
     case get_group_id_for_arbitrary_property(class_name) do
       nil ->
@@ -127,7 +174,7 @@ defmodule Twm.ClassGroupUtils do
   end
 
   # Gets conflicting class group IDs for a given class group
-  defp get_conflicting_class_group_ids(
+  defp get_conflicting_class_group_ids_from_config(
          class_group_id,
          has_postfix_modifier,
          conflicting_class_groups,

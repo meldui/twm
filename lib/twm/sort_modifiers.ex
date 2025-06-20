@@ -5,11 +5,12 @@ defmodule Twm.SortModifiers do
   - When an arbitrary variant appears, it must be preserved which modifiers are before and after it
   """
 
-  @doc """
-  Creates a sort modifiers function based on the provided configuration.
+  alias Twm.Context.ModifierSortingContext
 
-  The returned function sorts modifiers while preserving the order of position-sensitive
-  modifiers (those that start with '[' or are in the order_sensitive_modifiers list).
+  @doc """
+  Creates a context for sorting modifiers based on the provided configuration.
+
+  The context holds the configuration data needed for modifier sorting operations.
 
   ## Parameters
 
@@ -17,40 +18,40 @@ defmodule Twm.SortModifiers do
 
   ## Returns
 
-  A function that takes a list of modifiers and returns them sorted.
+  A Context struct containing the sorting configuration.
 
   ## Examples
 
       iex> config = [order_sensitive_modifiers: ["hover", "focus"]]
-      iex> sort_fn = Twm.SortModifiers.create_sort_modifiers(config)
-      iex> sort_fn.(["d", "hover", "c"])
+      iex> context = Twm.SortModifiers.create_sort_modifiers(config)
+      iex> Twm.SortModifiers.sort_modifiers(["d", "hover", "c"], context)
       ["d", "hover", "c"]
 
       iex> config = [order_sensitive_modifiers: ["hover"]]
-      iex> sort_fn = Twm.SortModifiers.create_sort_modifiers(config)
-      iex> sort_fn.(["[data-test]", "d", "c"])
+      iex> context = Twm.SortModifiers.create_sort_modifiers(config)
+      iex> Twm.SortModifiers.sort_modifiers(["[data-test]", "d", "c"], context)
       ["[data-test]", "c", "d"]
 
   """
-  @spec create_sort_modifiers(keyword()) :: (list(String.t()) -> list(String.t()))
+  @spec create_sort_modifiers(keyword()) :: Context.t()
   def create_sort_modifiers(config) do
     order_sensitive_modifiers_set =
       config
       |> Keyword.get(:order_sensitive_modifiers, [])
       |> MapSet.new()
 
-    fn modifiers ->
-      sort_modifiers(modifiers, order_sensitive_modifiers_set)
-    end
+    %ModifierSortingContext{
+      order_sensitive_modifiers_set: order_sensitive_modifiers_set
+    }
   end
 
   @doc """
-  Sorts a list of modifiers according to the sorting rules.
+  Sorts a list of modifiers using the provided context.
 
   ## Parameters
 
     * `modifiers` - List of modifier strings to sort
-    * `order_sensitive_modifiers_set` - MapSet of modifiers that are position-sensitive
+    * `context` - Context struct containing sorting configuration
 
   ## Returns
 
@@ -58,17 +59,27 @@ defmodule Twm.SortModifiers do
 
   ## Examples
 
-      iex> order_sensitive = MapSet.new(["hover", "focus"])
-      iex> Twm.SortModifiers.sort_modifiers(["d", "hover", "c"], order_sensitive)
+      iex> config = [order_sensitive_modifiers: ["hover"]]
+      iex> context = Twm.SortModifiers.create_sort_modifiers(config)
+      iex> Twm.SortModifiers.sort_modifiers(["d", "hover", "c"], context)
       ["d", "hover", "c"]
 
   """
-  @spec sort_modifiers(list(String.t()), MapSet.t()) :: list(String.t())
-  def sort_modifiers(modifiers, _order_sensitive_modifiers_set) when length(modifiers) <= 1 do
+  @spec sort_modifiers(list(String.t()), ModifierSortingContext.t()) :: list(String.t())
+  def sort_modifiers(modifiers, %ModifierSortingContext{
+        order_sensitive_modifiers_set: order_sensitive_modifiers_set
+      }) do
+    sort_modifiers_with_set(modifiers, order_sensitive_modifiers_set)
+  end
+
+  # Internal function to sort modifiers with a MapSet
+  @spec sort_modifiers_with_set(list(String.t()), MapSet.t()) :: list(String.t())
+  defp sort_modifiers_with_set(modifiers, _order_sensitive_modifiers_set)
+       when length(modifiers) <= 1 do
     modifiers
   end
 
-  def sort_modifiers(modifiers, order_sensitive_modifiers_set) do
+  defp sort_modifiers_with_set(modifiers, order_sensitive_modifiers_set) do
     {sorted_modifiers, unsorted_modifiers} =
       Enum.reduce(modifiers, {[], []}, fn modifier, {sorted_acc, unsorted_acc} ->
         is_position_sensitive =

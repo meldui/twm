@@ -8,17 +8,17 @@ defmodule Twm.Config.Theme do
 
   defmodule ThemeGetter do
     @moduledoc """
-    A struct that wraps a theme getter function and marks it as such.
+    A struct that identifies a theme key for lookup.
 
-    This is equivalent to the `isThemeGetter` property in the TypeScript version.
+    This replaces the anonymous function approach to eliminate memory pressure
+    from closures in the configuration.
     """
 
-    @enforce_keys [:key, :getter_fn]
-    defstruct [:key, :getter_fn, is_theme_getter: true]
+    @enforce_keys [:key]
+    defstruct [:key, is_theme_getter: true]
 
     @type t :: %__MODULE__{
             key: String.t() | atom(),
-            getter_fn: (map() -> list()),
             is_theme_getter: true
           }
   end
@@ -68,35 +68,8 @@ defmodule Twm.Config.Theme do
   end
 
   def from_theme(theme_key) when is_atom(theme_key) do
-    getter_fn = fn theme_config ->
-      case theme_config do
-        nil ->
-          []
-
-        config when is_map(config) ->
-          case Map.get(config, theme_key) do
-            nil -> []
-            value when is_list(value) -> value
-            value when is_map(value) -> Map.keys(value)
-            value -> [value]
-          end
-
-        config when is_list(config) ->
-          case Keyword.get(config, theme_key) do
-            nil -> []
-            value when is_list(value) -> value
-            value when is_map(value) -> Map.keys(value)
-            value -> [value]
-          end
-
-        _ ->
-          []
-      end
-    end
-
     %ThemeGetter{
       key: theme_key,
-      getter_fn: getter_fn,
       is_theme_getter: true
     }
   end
@@ -121,8 +94,30 @@ defmodule Twm.Config.Theme do
 
   """
   @spec call_theme_getter(ThemeGetter.t() | function(), map()) :: list()
-  def call_theme_getter(%ThemeGetter{getter_fn: getter_fn}, theme_config) do
-    getter_fn.(theme_config)
+  def call_theme_getter(%ThemeGetter{key: theme_key}, theme_config) do
+    case theme_config do
+      nil ->
+        []
+
+      config when is_map(config) ->
+        case Map.get(config, theme_key) do
+          nil -> []
+          value when is_list(value) -> value
+          value when is_map(value) -> Map.keys(value)
+          value -> [value]
+        end
+
+      config when is_list(config) ->
+        case Keyword.get(config, theme_key) do
+          nil -> []
+          value when is_list(value) -> value
+          value when is_map(value) -> Map.keys(value)
+          value -> [value]
+        end
+
+      _ ->
+        []
+    end
   end
 
   def call_theme_getter(func, theme_config) when is_function(func, 1) do
