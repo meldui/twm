@@ -1,7 +1,6 @@
 defmodule Twm.DefaultConfigTest do
   use ExUnit.Case, async: true
   alias Twm.Config
-  alias Twm.Config.Default
 
   describe "default_config" do
     test "has correct structure and values" do

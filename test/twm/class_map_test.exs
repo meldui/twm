@@ -33,7 +33,6 @@ defmodule Twm.ClassMapTest do
   use ExUnit.Case, async: true
 
   alias Twm.Config
-  alias Twm.Config.Default
   alias Twm.ClassGroupUtils
 
   describe "class map structure" do
