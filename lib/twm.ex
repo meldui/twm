@@ -50,27 +50,21 @@ defmodule Twm do
       "pt-4 pb-3"
 
   """
-  @spec merge(String.t() | [String.t()], Types.config()) :: String.t()
+  @spec merge(String.t() | [String.t()], Types.config() | nil) :: String.t()
   def merge(classes, config \\ nil)
 
-  def merge(classes, nil) do
-    case Cache.get_config() do
-      {:ok, config} ->
-        merge(classes, config)
-
-      {:error, _} ->
-        merge(classes, Twm.Config.get_default())
-    end
+  def merge(classes, nil) when is_binary(classes) do
+    merge(classes, Twm.Config.get_default())
   end
 
   def merge(classes, config) when is_binary(classes) do
-    case Cache.get(classes) do
+    case Cache.get(config[:cache_name], classes) do
       {:ok, result} ->
         result
 
       :error ->
         result = do_merge(classes, config)
-        Cache.put(classes, result)
+        Cache.put(config[:cache_name], classes, result)
         result
     end
   end

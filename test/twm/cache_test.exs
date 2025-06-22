@@ -5,7 +5,8 @@ defmodule Twm.CacheTest do
   setup do
     # Start a cache process specifically for each test
     cache_name = :"cache_#{:erlang.unique_integer([:positive])}"
-    {:ok, pid} = Twm.Cache.start_link(name: cache_name, cache_size: 3)
+    config = Twm.Config.extend(cache_size: 3)
+    {:ok, pid} = Twm.Cache.start_link(name: cache_name, config: config)
     %{cache: cache_name, pid: pid}
   end
 

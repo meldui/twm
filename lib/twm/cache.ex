@@ -84,7 +84,8 @@ defmodule Twm.Cache do
       Process.whereis(name)
     else
       # Otherwise, start a new process
-      {:ok, pid} = start_link(name: name, cache_size: cache_size)
+      config = Twm.Config.extend(cache_size: cache_size)
+      {:ok, pid} = start_link(name: name, config: config)
       pid
     end
   end
@@ -196,7 +197,8 @@ defmodule Twm.Cache do
   ## Examples
 
       # Start a cache server for doctest
-      iex> cache_pid = Twm.Cache.ensure_started(10)
+      iex> unique_number = Integer.to_string(:erlang.unique_integer([:positive]))
+      iex> cache_pid = Twm.Cache.ensure_started(10, String.to_atom("cache" <> unique_number))
       iex> Twm.Cache.put(cache_pid, "key1", "value1")
       :ok
       iex> Twm.Cache.put(cache_pid, "key2", "value2")
