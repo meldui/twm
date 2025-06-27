@@ -409,9 +409,6 @@ The library includes comprehensive validators for different Tailwind value types
 # Run all tests
 mix test
 
-# Run tests with coverage
-mix test --cover
-
 # Run specific test file
 mix test test/twm_test.exs
 ```
@@ -438,26 +435,6 @@ mix run scripts/quick_benchmark.exs
 # Full benchmark suite
 mix run test/twm_benchmark.exs
 ```
-
-## Comparison with Original TypeScript Library
-
-This Elixir port maintains full feature parity with the original TypeScript library while leveraging Elixir's strengths:
-
-### Advantages of the Elixir Port
-
-- **Immutable Data Structures**: More predictable and safer operations
-- **Pattern Matching**: Elegant handling of different input types and edge cases
-- **Fault Tolerance**: Graceful error handling and recovery
-- **Concurrency**: Better performance in concurrent environments through OTP
-- **Functional Style**: Clean, composable API design
-- **Process Isolation**: Cache runs in isolated GenServer process
-
-### Performance Characteristics
-
-- **Comparable Speed**: Performance is comparable to or better than the original
-- **Memory Efficiency**: Elixir's memory management provides excellent GC performance
-- **Concurrency**: Excellent performance under concurrent load
-- **Caching**: GenServer-based LRU cache provides thread-safe performance optimization
 
 ### API Compatibility
 
@@ -489,7 +466,7 @@ Twm.merge("px-2 py-1 px-3") # => "py-1 px-3"
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
 
 ## Acknowledgments
 

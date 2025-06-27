@@ -16,8 +16,12 @@ defmodule QuickBenchmark do
 
     # Test data for quick benchmarks
     simple_classes = "px-2 py-1 px-3"
-    medium_classes = "flex items-center justify-center bg-blue-500 bg-red-500 text-white text-black p-4 p-2"
-    complex_classes = "font-medium text-sm leading-16 group/button relative isolate items-center justify-center overflow-hidden rounded-md outline-none transition focus-visible:ring focus-visible:ring-primary inline-flex bg-primary-50 ring ring-primary-200 text-primary dark:text-primary-900 hover:bg-primary-100 gap-4 px-6 py-4 p-0 size-24"
+
+    medium_classes =
+      "flex items-center justify-center bg-blue-500 bg-red-500 text-white text-black p-4 p-2"
+
+    complex_classes =
+      "font-medium text-sm leading-16 group/button relative isolate items-center justify-center overflow-hidden rounded-md outline-none transition focus-visible:ring focus-visible:ring-primary inline-flex bg-primary-50 ring ring-primary-200 text-primary dark:text-primary-900 hover:bg-primary-100 gap-4 px-6 py-4 p-0 size-24"
 
     # Array of classes for batch testing
     batch_classes = [
