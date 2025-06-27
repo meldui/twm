@@ -50,30 +50,43 @@ defmodule Twm do
       "pt-4 pb-3"
 
   """
-  @spec merge(String.t() | [String.t()], Types.config() | nil) :: String.t()
-  def merge(classes, config \\ nil)
+  @spec merge(String.t() | [String.t()], Types.config() | nil, Keyword.t()) :: String.t()
+  def merge(classes, config \\ nil, opts \\ [])
 
-  def merge(classes, nil) when is_binary(classes) do
-    merge(classes, Twm.Config.get_default())
-  end
+  # def merge(classes, nil, opts) when is_binary(classes) do
+  #   cache_name = Keyword.get(opts, :cache_name, Twm.Cache)
 
-  def merge(classes, config) when is_binary(classes) do
-    case Cache.get(config[:cache_name], classes) do
+  #   case Cache.get(cache_name, classes) do
+  #     {:ok, result} ->
+  #       result
+
+  #     :error ->
+  #       result = do_merge(classes, Twm.Config.get_default())
+  #       Cache.put(cache_name, classes, result)
+  #       result
+  #   end
+  # end
+
+  def merge(classes, config, opts) when is_binary(classes) do
+    cache_name = Keyword.get(opts, :cache_name, Twm.Cache)
+
+    case Cache.get(cache_name, classes) do
       {:ok, result} ->
         result
 
       :error ->
+        config = if config == nil, do: Twm.Config.get_default(), else: config
         result = do_merge(classes, config)
-        Cache.put(config[:cache_name], classes, result)
+        Cache.put(cache_name, classes, result)
         result
     end
   end
 
-  def merge(classes, config) when is_list(classes) do
+  def merge(classes, config, opts) when is_list(classes) do
     classes
     |> flatten_and_filter_classes()
     |> Enum.join(" ")
-    |> merge(config)
+    |> merge(config, opts)
   end
 
   # Private function to perform the actual merge operation

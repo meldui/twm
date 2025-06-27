@@ -27,51 +27,92 @@ defmodule TwmBenchmark do
 
     Benchee.run(
       %{
-        "init" => fn ->
-          Twm.merge("")
-        end,
-        "simple" => fn ->
-          run_with_cache(fn -> Twm.merge("flex mx-10 px-10 mr-5 pr-5") end)
-        end,
-        "heavy" => fn ->
-          run_with_cache(fn ->
-            Twm.merge(
-              "font-medium text-sm leading-16 " <>
-                "group/button relative isolate items-center justify-center overflow-hidden rounded-md outline-none transition [-webkit-app-region:no-drag] focus-visible:ring focus-visible:ring-primary " <>
-                "inline-flex " <>
-                "bg-primary-50 ring ring-primary-200 " <>
-                "text-primary dark:text-primary-900 hover:bg-primary-100 " <>
-                "font-medium text-sm leading-16 gap-4 px-6 py-4 " <>
-                "p-0 size-24"
-            )
-          end)
-        end,
-        "collection with cache" => fn ->
-          run_with_cache(fn ->
-            Enum.each(prepared_data, fn class_string ->
-              Twm.merge(class_string)
-            end)
-          end)
-        end,
-        "collection without cache" => fn ->
-          config = Twm.Config.get_default()
+        # "init" => fn _ ->
+        #   Enum.each(1..1322, fn _ ->
+        #     Twm.merge("")
+        #   end)
+        # end,
+        # "simple" => fn _ ->
+        #   run_with_cache(fn ->
+        #     Enum.each(1..1322, fn _ -> Twm.merge("flex mx-10 px-10 mr-5 pr-5") end)
+        #   end)
+        # end,
+        # "heavy" => fn _ ->
+        #   run_with_cache(fn ->
+        #     Enum.each(1..1322, fn _ ->
+        #       Twm.merge(
+        #         "font-medium text-sm leading-16 " <>
+        #           "group/button relative isolate items-center justify-center overflow-hidden rounded-md outline-none transition [-webkit-app-region:no-drag] focus-visible:ring focus-visible:ring-primary " <>
+        #           "inline-flex " <>
+        #           "bg-primary-50 ring ring-primary-200 " <>
+        #           "text-primary dark:text-primary-900 hover:bg-primary-100 " <>
+        #           "font-medium text-sm leading-16 gap-4 px-6 py-4 " <>
+        #           "p-0 size-24"
+        #       )
+        #     end)
+        #   end)
+        # end
+        "collection with cache" =>
+          {fn {config, input_classes} ->
+             # config = Twm.Config.get_default()
+             # Twm.merge(input, config)
+             # IO.inspect(input, label: "Input")
 
-          Enum.each(prepared_data, fn class_string ->
-            Twm.Merger.merge_classes(class_string, config)
-          end)
-        end
+             # IO.inspect("coming here")
+
+             run_with_cache(fn ->
+               # Enum.each(input, fn class_string ->
+               Twm.merge(input_classes)
+               # end)
+             end)
+           end,
+           before_scenario: fn input ->
+             config = Twm.Config.get_default()
+             {config, input.()}
+           end},
+        "collection without cache" => {
+          fn {config, input_classes} ->
+            # config = Twm.Config.get_default()
+            Twm.merge(input_classes, config)
+          end,
+          before_scenario: fn input ->
+            config = Twm.Config.get_default()
+            stop_cache_if_running()
+            {config, input.()}
+          end
+        }
       },
+      inputs: %{"benchmark_data" => prepare_input()},
       time: 10,
       memory_time: 2,
       formatters: [
         Benchee.Formatters.Console
-      ]
+      ],
+      before_scenario: fn input ->
+        start_cache_if_needed()
+        input
+      end,
+      after_scenario: fn _ ->
+        stop_cache_if_running()
+      end
     )
 
     IO.puts("Benchmark complete!")
 
     # Ensure cache is properly cleaned up
     stop_cache_if_running()
+  end
+
+  defp prepare_input() do
+    benchmark_data =
+      load_benchmark_data() ++
+        load_benchmark_data() ++ load_benchmark_data() ++ load_benchmark_data()
+
+    length = length(benchmark_data)
+
+    fn ->
+      Enum.at(benchmark_data, :rand.uniform(length) - 1)
+    end
   end
 
   defp load_benchmark_data do

@@ -3,7 +3,7 @@ defmodule TwmTest do
   doctest Twm
 
   setup do
-    # {:ok, _} = Twm.Cache.start_link(cache_size: 0)
+    {:ok, _} = Twm.Cache.start_link(cache_size: 100)
     :ok
   end
 
