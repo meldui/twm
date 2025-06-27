@@ -47,7 +47,7 @@ defmodule Twm.Parser.ClassName do
 
   * A map containing the parsed components of the class name
   """
-  @spec parse_class_name(String.t(), ClassParsingContext.t()) :: Types.class_name_parsed()
+  @spec parse_class_name(String.t(), ClassParsingContext.t()) :: Types.parsed_class_name()
   def parse_class_name(class_name, %ClassParsingContext{} = context) do
     # First check if experimental parser should be used
     if context.experimental_parse_class_name do

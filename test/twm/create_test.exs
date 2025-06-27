@@ -1,6 +1,5 @@
 defmodule Twm.Config.CreateTest do
   use ExUnit.Case, async: true
-  doctest Twm.Config.Create
 
   describe "Tailwind.merge/2" do
     test "works with single config function" do

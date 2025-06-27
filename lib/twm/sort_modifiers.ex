@@ -33,7 +33,7 @@ defmodule Twm.SortModifiers do
       ["[data-test]", "c", "d"]
 
   """
-  @spec create_sort_modifiers(keyword()) :: Context.t()
+  @spec create_sort_modifiers(keyword()) :: ModifierSortingContext.t()
   def create_sort_modifiers(config) do
     order_sensitive_modifiers_set =
       config

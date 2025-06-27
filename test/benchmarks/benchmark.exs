@@ -5,7 +5,7 @@ defmodule TwmBenchmark do
   Run with: mix run test/twm_benchmark.exs
   """
 
-  @benchmark_data_path "test/twm/tw-merge-benchmark-data.json"
+  @benchmark_data_path "test/benchmarks/tw-merge-benchmark-data.json"
 
   def run do
     IO.puts("Starting Twm benchmarks...")
@@ -18,52 +18,12 @@ defmodule TwmBenchmark do
     prepared_data = prepare_benchmark_data(benchmark_data)
     IO.puts("Prepared #{length(prepared_data)} test strings")
 
-    # CACHE BEHAVIOR ANALYSIS:
-    # - Twm.merge/1 uses global Twm.Cache GenServer (fast when cache running)
-    # - Twm.Merger.merge_classes/2 bypasses cache completely (always slow)
-    # - extend_tailwind_merge/1 creates custom functions that use merge_with_config/2
-    #   which directly calls Twm.Merger.merge_classes/2, bypassing global cache
-    # - cache_size parameter in extend_tailwind_merge is not yet implemented
-
     Benchee.run(
       %{
-        # "init" => fn _ ->
-        #   Enum.each(1..1322, fn _ ->
-        #     Twm.merge("")
-        #   end)
-        # end,
-        # "simple" => fn _ ->
-        #   run_with_cache(fn ->
-        #     Enum.each(1..1322, fn _ -> Twm.merge("flex mx-10 px-10 mr-5 pr-5") end)
-        #   end)
-        # end,
-        # "heavy" => fn _ ->
-        #   run_with_cache(fn ->
-        #     Enum.each(1..1322, fn _ ->
-        #       Twm.merge(
-        #         "font-medium text-sm leading-16 " <>
-        #           "group/button relative isolate items-center justify-center overflow-hidden rounded-md outline-none transition [-webkit-app-region:no-drag] focus-visible:ring focus-visible:ring-primary " <>
-        #           "inline-flex " <>
-        #           "bg-primary-50 ring ring-primary-200 " <>
-        #           "text-primary dark:text-primary-900 hover:bg-primary-100 " <>
-        #           "font-medium text-sm leading-16 gap-4 px-6 py-4 " <>
-        #           "p-0 size-24"
-        #       )
-        #     end)
-        #   end)
-        # end
         "collection with cache" =>
-          {fn {config, input_classes} ->
-             # config = Twm.Config.get_default()
-             # Twm.merge(input, config)
-             # IO.inspect(input, label: "Input")
-
-             # IO.inspect("coming here")
-
+          {fn {_config, input_classes} ->
              run_with_cache(fn ->
-               # Enum.each(input, fn class_string ->
                Twm.merge(input_classes)
-               # end)
              end)
            end,
            before_scenario: fn input ->
@@ -72,7 +32,6 @@ defmodule TwmBenchmark do
            end},
         "collection without cache" => {
           fn {config, input_classes} ->
-            # config = Twm.Config.get_default()
             Twm.merge(input_classes, config)
           end,
           before_scenario: fn input ->
@@ -82,9 +41,10 @@ defmodule TwmBenchmark do
           end
         }
       },
-      inputs: %{"benchmark_data" => prepare_input()},
+      inputs: %{"benchmark_data" => prepare_input(benchmark_data)},
       time: 10,
       memory_time: 2,
+      parallel: 4,
       formatters: [
         Benchee.Formatters.Console
       ],
@@ -103,11 +63,7 @@ defmodule TwmBenchmark do
     stop_cache_if_running()
   end
 
-  defp prepare_input() do
-    benchmark_data =
-      load_benchmark_data() ++
-        load_benchmark_data() ++ load_benchmark_data() ++ load_benchmark_data()
-
+  defp prepare_input(benchmark_data) do
     length = length(benchmark_data)
 
     fn ->
@@ -162,11 +118,6 @@ defmodule TwmBenchmark do
 
   defp run_with_cache(fun) do
     start_cache_if_needed()
-    fun.()
-  end
-
-  defp run_without_cache(fun) do
-    stop_cache_if_running()
     fun.()
   end
 

@@ -142,7 +142,7 @@ defmodule Twm.Config do
   """
   @spec validate(keyword()) :: {:ok, keyword()} | {:error, String.t()}
   def validate(config) when is_list(config) do
-    required_keys = [:cache_name, :cache_size, :theme, :class_groups, :conflicting_class_groups]
+    required_keys = [:cache_size, :theme, :class_groups, :conflicting_class_groups]
 
     missing_keys =
       Enum.filter(required_keys, fn key ->

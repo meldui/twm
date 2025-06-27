@@ -34,14 +34,8 @@ defmodule Twm.Merger do
     else
       class_list = String.split(classes, ~r/\s+/, trim: true)
 
-      class_utils_context =
-        case Twm.Cache.get_class_group_utils() do
-          {:ok, class_group_utils} ->
-            class_group_utils
-
-          {:error, _} ->
-            ClassGroupUtils.create_class_group_utils(config)
-        end
+      # TODO: Find out ways to cache this
+      class_utils_context = ClassGroupUtils.create_class_group_utils(config)
 
       # Create class name parser context for the config
       parse_class_name_context = ClassName.create_parse_class_name(config)

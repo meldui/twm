@@ -1,4 +1,4 @@
-defmodule TwmTest do
+defmodule Twm.Test do
   use ExUnit.Case, async: false
   doctest Twm
 

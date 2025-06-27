@@ -4,7 +4,8 @@ defmodule Twm.Cache do
 
   This module provides caching capabilities for Tailwind class merging
   operations to improve performance by avoiding redundant operations
-  on the same class combinations.
+  on the same class combinations. It also stores configuration and
+  class group utilities in ETS tables for efficient access.
 
   This module can be used in two ways:
 
@@ -29,6 +30,30 @@ defmodule Twm.Cache do
   end
   ```
 
+  You can also pass a custom cache name and configuration:
+
+  ```
+  defmodule Twm.Application do
+    @moduledoc false
+
+    use Application
+
+    @impl true
+    def start(_type, _args) do
+      # Custom configuration
+      custom_config = Twm.Config.extend(cache_size: 1000)
+
+      children = [
+        # Start the Twm.Cache with custom name and configuration
+        {Twm.Cache, [name: :my_twm_cache, config: custom_config]}
+      ]
+
+      opts = [strategy: :one_for_one, name: Twm.Supervisor]
+      Supervisor.start_link(children, opts)
+    end
+  end
+  ```
+
   2. As custom cache instances for custom merge functions:
 
   ```
@@ -37,9 +62,8 @@ defmodule Twm.Cache do
 
   # Use the cache directly
   Twm.Cache.put(cache_pid, "key", "value")
-  ```
-
   """
+
   use GenServer
   require Logger
 
@@ -53,6 +77,7 @@ defmodule Twm.Cache do
   * `:name` - The name to register the cache process with. Defaults to `Twm.Cache`.
   * `:cache_size` - The maximum number of entries in the cache. Defaults to 500.
   """
+
   @spec start_link(keyword()) :: GenServer.on_start()
   def start_link(opts \\ []) do
     name = Keyword.get(opts, :name, __MODULE__)
@@ -279,40 +304,6 @@ defmodule Twm.Cache do
         else
           :error
         end
-    end
-  end
-
-  def get_config(name \\ __MODULE__) do
-    # {:error, "Config not found in cache"}
-    safe_ets_lookup(fn ->
-      case :ets.lookup(name, :config) do
-        [{:config, config}] ->
-          {:ok, config}
-
-        [] ->
-          {:error, "Config not found in cache"}
-      end
-    end)
-  end
-
-  def get_class_group_utils(name \\ __MODULE__) do
-    # {:error, "Class group utils not found in cache"}
-    safe_ets_lookup(fn ->
-      case :ets.lookup(name, :class_group_utils) do
-        [{:class_group_utils, class_group_utils}] ->
-          {:ok, class_group_utils}
-
-        [] ->
-          {:error, "Class group utils not found in cache"}
-      end
-    end)
-  end
-
-  defp safe_ets_lookup(func) do
-    try do
-      func.()
-    rescue
-      ArgumentError -> {:error, "Cache not initialized"}
     end
   end
 

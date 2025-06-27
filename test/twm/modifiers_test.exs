@@ -54,7 +54,6 @@ defmodule Twm.ModifiersTest do
     test "custom configuration postfix modifiers" do
       config =
         Twm.Config.new(
-          cache_name: :test_cache_1,
           cache_size: 10,
           theme: [],
           class_groups: [
@@ -100,7 +99,6 @@ defmodule Twm.ModifiersTest do
     test "custom order sensitive modifiers" do
       config =
         Twm.Config.new(
-          cache_name: :test_cache_2,
           cache_size: 10,
           theme: [],
           class_groups: [

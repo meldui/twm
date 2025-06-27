@@ -32,8 +32,7 @@ defmodule Twm.Types do
   * `:experimental_parse_class_name` - Optional experimental class name parser function
   """
   @type config :: [
-          {:cache_name, atom() | String.t()}
-          | {:prefix, String.t()}
+          {:prefix, String.t()}
           | {:theme, keyword()}
           | {:class_groups, keyword()}
           | {:conflicting_class_groups, keyword()}
