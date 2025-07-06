@@ -1,5 +1,5 @@
 defmodule Twm.TailwindCssVersionsTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true
 
   describe "Tailwind CSS v3.3 features" do
     test "supports text line height syntax" do

@@ -1,5 +1,5 @@
 defmodule Twm.WonkyInputsTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true
 
   describe "handles wonky inputs" do
     test "handles leading whitespace" do

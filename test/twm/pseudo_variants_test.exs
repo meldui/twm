@@ -1,5 +1,5 @@
 defmodule Twm.PseudoVariantsTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true
 
   describe "pseudo variants conflicts" do
     test "handles pseudo variants conflicts properly" do

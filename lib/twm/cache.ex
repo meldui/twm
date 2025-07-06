@@ -58,7 +58,7 @@ defmodule Twm.Cache do
 
   ```
   # Create a custom cache with a specific size
-  cache_pid = Twm.Cache.ensure_started(20)
+  cache_pid = Twm.Cache.ensure_started(20, :cache_23231)
 
   # Use the cache directly
   Twm.Cache.put(cache_pid, "key", "value")
@@ -101,7 +101,8 @@ defmodule Twm.Cache do
 
   ## Examples
 
-      iex> cache_pid = Twm.Cache.ensure_started(100)
+      iex> unique_number = Integer.to_string(:erlang.unique_integer([:positive]))
+      iex> cache_pid = Twm.Cache.ensure_started(100, String.to_atom("cache" <> unique_number))
       iex> Twm.Cache.put(cache_pid, "key", "value")
       :ok
       iex> Twm.Cache.get(cache_pid, "key")
@@ -130,7 +131,8 @@ defmodule Twm.Cache do
   ## Examples
 
       # Start a cache server for doctest
-      iex> cache_pid = Twm.Cache.ensure_started(10)
+      iex> unique_number = Integer.to_string(:erlang.unique_integer([:positive]))
+      iex> cache_pid = Twm.Cache.ensure_started(10, String.to_atom("cache" <> unique_number))
       iex> Twm.Cache.put(cache_pid, "key1", "value1")
       :ok
       iex> Twm.Cache.get(cache_pid, "key1")
@@ -164,7 +166,8 @@ defmodule Twm.Cache do
   ## Examples
 
       # Start a cache server for doctest
-      iex> cache_pid = Twm.Cache.ensure_started(10)
+      iex> unique_number = Integer.to_string(:erlang.unique_integer([:positive]))
+      iex> cache_pid = Twm.Cache.ensure_started(10, String.to_atom("cache" <> unique_number))
       iex> Twm.Cache.put(cache_pid, "key1", "value1")
       :ok
       iex> Twm.Cache.get(cache_pid, "key1")
@@ -178,7 +181,7 @@ defmodule Twm.Cache do
     case server do
       pid when is_pid(pid) ->
         # When a pid is provided, call it directly
-        GenServer.call(pid, {:get, key})
+        GenServer.call(pid, {:get_or_create, key})
 
       name when is_atom(name) ->
         # When a name is provided, check if the process exists
@@ -199,7 +202,8 @@ defmodule Twm.Cache do
   ## Examples
 
       # Start a cache server for doctest
-      iex> cache_pid = Twm.Cache.ensure_started(10)
+      iex> unique_number = Integer.to_string(:erlang.unique_integer([:positive]))
+      iex> cache_pid = Twm.Cache.ensure_started(10, String.to_atom("cache" <> unique_number))
       iex> Twm.Cache.put(cache_pid, "key1", "value1")
       :ok
       iex> Twm.Cache.get(cache_pid, "key1")
@@ -229,7 +233,8 @@ defmodule Twm.Cache do
   ## Examples
 
       # Start a cache server for doctest
-      iex> cache_pid = Twm.Cache.ensure_started(10)
+      iex> unique_number = Integer.to_string(:erlang.unique_integer([:positive]))
+      iex> cache_pid = Twm.Cache.ensure_started(10, String.to_atom("cache" <> unique_number))
       iex> Twm.Cache.put(cache_pid, "key1", "value1")
       :ok
       iex> Twm.Cache.clear(cache_pid)
@@ -300,7 +305,8 @@ defmodule Twm.Cache do
   ## Examples
 
       # Start a cache server for doctest
-      iex> cache_pid = Twm.Cache.ensure_started(100)
+      iex> unique_number = Integer.to_string(:erlang.unique_integer([:positive]))
+      iex> cache_pid = Twm.Cache.ensure_started(100, String.to_atom("cache" <> unique_number))
       iex> # Fill cache with a few entries
       iex> Twm.Cache.put(cache_pid, "key1", "value1")
       :ok

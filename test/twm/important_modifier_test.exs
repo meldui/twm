@@ -1,5 +1,5 @@
 defmodule Twm.ImportantModifierTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true
 
   describe "merges tailwind classes with important modifier correctly" do
     test "handles exclamation mark after class name" do

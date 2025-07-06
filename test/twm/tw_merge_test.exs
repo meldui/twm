@@ -1,5 +1,5 @@
 defmodule Twm.TwMergeTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true
 
   describe "merge function" do
     test "merges conflicting mix-blend classes" do

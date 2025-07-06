@@ -1,5 +1,5 @@
 defmodule Twm.ClassGroupConflictsTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true
 
   describe "merges classes from same group correctly" do
     test "overflow-x classes" do
