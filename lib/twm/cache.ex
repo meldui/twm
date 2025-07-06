@@ -352,7 +352,7 @@ defmodule Twm.Cache do
      %{
        entries: %{},
        access_order: [],
-       max_size: Map.get(config, :cache_size, 10000),
+       max_size: Map.get(config, :cache_size, 10_000),
        config: config,
        class_utils_context: class_utils_context
      }}

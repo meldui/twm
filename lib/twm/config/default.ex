@@ -45,7 +45,7 @@ defmodule Twm.Config.Default do
   def get do
     %Twm.Config{
       cache_name: Twm.Cache,
-      cache_size: 10000,
+      cache_size: 10_000,
       theme: theme(),
       class_groups: class_groups(),
       conflicting_class_groups: conflicting_class_groups(),

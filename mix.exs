@@ -14,7 +14,7 @@ defmodule Twm.MixProject do
       description: description(),
       package: package(),
       name: "Twm",
-      source_url: "https://github.com/yourusername/twm",
+      source_url: "https://github.com/meldui/twm",
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
         coveralls: :test,

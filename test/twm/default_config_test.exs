@@ -7,7 +7,7 @@ defmodule Twm.DefaultConfigTest do
       default_config = Twm.Config.get_default()
 
       # Check static configuration values
-      assert default_config.cache_size == 10000
+      assert default_config.cache_size == 10_000
       assert is_list(default_config.theme)
       assert is_list(default_config.class_groups)
       assert is_list(default_config.conflicting_class_groups)
@@ -38,7 +38,7 @@ defmodule Twm.DefaultConfigTest do
           ]
         )
 
-      assert config.cache_size == 10000
+      assert config.cache_size == 10_000
       assert config.class_groups[:custom_group] == ["custom-value"]
       assert "block" in config.class_groups[:display]
 

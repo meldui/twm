@@ -191,7 +191,7 @@ defmodule Twm.Config do
       {:ok,
        %Twm.Config{
          cache_name: Keyword.get(config, :cache_name, Twm.Cache),
-         cache_size: Keyword.get(config, :cache_size, 10000),
+         cache_size: Keyword.get(config, :cache_size, 10_000),
          theme: Keyword.get(config, :theme, []),
          class_groups: Keyword.get(config, :class_groups, []),
          conflicting_class_groups: Keyword.get(config, :conflicting_class_groups, []),
