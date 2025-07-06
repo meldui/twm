@@ -62,6 +62,7 @@ defmodule Twm.Cache do
 
   # Use the cache directly
   Twm.Cache.put(cache_pid, "key", "value")
+  ```
   """
 
   use GenServer
