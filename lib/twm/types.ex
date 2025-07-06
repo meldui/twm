@@ -20,23 +20,25 @@ defmodule Twm.Types do
           is_external: boolean() | nil
         }
 
-  @typedoc """
-  Configuration for the Twm library.
+  # @typedoc """
+  # Configuration for the Twm library.
 
-  * `:cache_name` - Name of the LRU cache (if enabled)
-  * `:prefix` - Optional prefix for Tailwind classes
-  * `:theme` - Theme configuration
-  * `:class_groups` - Class group definitions
-  * `:conflicting_class_groups` - Groups of class names that conflict with each other
-  * `:cache_size` - Size of the LRU cache (if enabled)
-  * `:experimental_parse_class_name` - Optional experimental class name parser function
-  """
-  @type config :: [
-          {:prefix, String.t()}
-          | {:theme, keyword()}
-          | {:class_groups, keyword()}
-          | {:conflicting_class_groups, keyword()}
-          | {:cache_size, non_neg_integer()}
-          | {:experimental_parse_class_name, (keyword() -> parsed_class_name())}
-        ]
+  # * `:cache_name` - Name of the LRU cache (if enabled)
+  # * `:prefix` - Optional prefix for Tailwind classes
+  # * `:theme` - Theme configuration
+  # * `:class_groups` - Class group definitions
+  # * `:conflicting_class_groups` - Groups of class names that conflict with each other
+  # * `:cache_size` - Size of the LRU cache (if enabled)
+  # * `:experimental_parse_class_name` - Optional experimental class name parser function
+  # """
+  # @type config :: [
+  #         {:cache_name, String.t() | nil}
+  #         | {:cache_size, non_neg_integer()}
+  #         | {:prefix, String.t()}
+  #         | {:theme, keyword()}
+  #         | {:class_groups, keyword()}
+  #         | {:conflicting_class_groups, keyword()}
+  #         | {:cache_size, non_neg_integer()}
+  #         | {:experimental_parse_class_name, (keyword() -> parsed_class_name())}
+  #       ]
 end

@@ -41,17 +41,17 @@ defmodule Twm.Config.Default do
       true
 
   """
-  @spec get() :: keyword()
+  @spec get() :: Twm.Config.t()
   def get do
-    [
+    %Twm.Config{
       cache_name: Twm.Cache,
-      cache_size: 500,
+      cache_size: 10000,
       theme: theme(),
       class_groups: class_groups(),
       conflicting_class_groups: conflicting_class_groups(),
       conflicting_class_group_modifiers: conflicting_class_group_modifiers(),
       order_sensitive_modifiers: order_sensitive_modifiers()
-    ]
+    }
   end
 
   # Scale helpers

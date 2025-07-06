@@ -58,12 +58,12 @@ defmodule Twm.Config.CreateTest do
         Twm.Config.extend(config, fn config ->
           # Update class_groups
           config =
-            Keyword.update!(config, :class_groups, fn class_groups ->
+            Map.update!(config, :class_groups, fn class_groups ->
               Keyword.put(class_groups, :helloFromSecondConfig, ["hello-there"])
             end)
 
           # Update conflicting_class_groups
-          Keyword.update!(config, :conflicting_class_groups, fn conflicting ->
+          Map.update!(config, :conflicting_class_groups, fn conflicting ->
             Keyword.update(conflicting, :fooKey, ["helloFromSecondConfig"], fn existing ->
               existing ++ ["helloFromSecondConfig"]
             end)

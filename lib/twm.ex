@@ -7,7 +7,7 @@ defmodule Twm do
   """
 
   alias Twm.Cache
-  alias Twm.Types
+  alias Twm.Config
 
   # Re-export validators functions
   alias Twm.Validators
@@ -50,49 +50,40 @@ defmodule Twm do
       "pt-4 pb-3"
 
   """
-  @spec merge(String.t() | [String.t()], Types.config() | nil, Keyword.t()) :: String.t()
-  def merge(classes, config \\ nil, opts \\ [])
 
-  # def merge(classes, nil, opts) when is_binary(classes) do
-  #   cache_name = Keyword.get(opts, :cache_name, Twm.Cache)
+  @spec merge(String.t() | [String.t()], Keyword.t() | Config.t() | nil) :: String.t()
 
-  #   case Cache.get(cache_name, classes) do
-  #     {:ok, result} ->
-  #       result
+  def merge(classes, options \\ [])
 
-  #     :error ->
-  #       result = do_merge(classes, Twm.Config.get_default())
-  #       Cache.put(cache_name, classes, result)
-  #       result
-  #   end
-  # end
-
-  def merge(classes, config, opts) when is_binary(classes) do
+  def merge(classes, opts) when is_binary(classes) and is_list(opts) do
     cache_name = Keyword.get(opts, :cache_name, Twm.Cache)
 
-    case Cache.get(cache_name, classes) do
+    case Cache.get_or_create(cache_name, classes) do
       {:ok, result} ->
         result
 
       :error ->
-        config = if config == nil, do: Twm.Config.get_default(), else: config
-        result = do_merge(classes, config)
-        Cache.put(cache_name, classes, result)
+        result = Twm.Merger.merge_classes(classes, Twm.Config.get_default())
         result
     end
   end
 
-  def merge(classes, config, opts) when is_list(classes) do
+  def merge(classes, opts) when is_list(classes) and is_list(opts) do
     classes
     |> flatten_and_filter_classes()
     |> Enum.join(" ")
-    |> merge(config, opts)
+    |> merge(opts)
   end
 
-  # Private function to perform the actual merge operation
-  defp do_merge(classes, config) when is_binary(classes) do
-    # Use the proper merger implementation
+  def merge(classes, %Twm.Config{} = config) when is_binary(classes) do
     Twm.Merger.merge_classes(classes, config)
+  end
+
+  def merge(classes, %Twm.Config{} = config) when is_list(classes) do
+    classes
+    |> flatten_and_filter_classes()
+    |> Enum.join(" ")
+    |> merge(config)
   end
 
   # Private helper function to flatten nested arrays and filter out nil/false values

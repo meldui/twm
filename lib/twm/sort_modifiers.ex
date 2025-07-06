@@ -22,23 +22,23 @@ defmodule Twm.SortModifiers do
 
   ## Examples
 
-      iex> config = [order_sensitive_modifiers: ["hover", "focus"]]
+      iex> config = Twm.Config.new([order_sensitive_modifiers: ["hover", "focus"]])
       iex> context = Twm.SortModifiers.create_sort_modifiers(config)
       iex> Twm.SortModifiers.sort_modifiers(["d", "hover", "c"], context)
       ["d", "hover", "c"]
 
-      iex> config = [order_sensitive_modifiers: ["hover"]]
+      iex> config = Twm.Config.new([order_sensitive_modifiers: ["hover"]])
       iex> context = Twm.SortModifiers.create_sort_modifiers(config)
       iex> Twm.SortModifiers.sort_modifiers(["[data-test]", "d", "c"], context)
       ["[data-test]", "c", "d"]
 
   """
-  @spec create_sort_modifiers(keyword()) :: ModifierSortingContext.t()
+  @spec create_sort_modifiers(Twm.Config.t()) :: ModifierSortingContext.t()
   def create_sort_modifiers(config) do
     order_sensitive_modifiers_set =
-      config
-      |> Keyword.get(:order_sensitive_modifiers, [])
-      |> MapSet.new()
+      config.order_sensitive_modifiers ||
+        []
+        |> MapSet.new()
 
     %ModifierSortingContext{
       order_sensitive_modifiers_set: order_sensitive_modifiers_set
@@ -59,7 +59,7 @@ defmodule Twm.SortModifiers do
 
   ## Examples
 
-      iex> config = [order_sensitive_modifiers: ["hover"]]
+      iex> config = Twm.Config.new([order_sensitive_modifiers: ["hover"]])
       iex> context = Twm.SortModifiers.create_sort_modifiers(config)
       iex> Twm.SortModifiers.sort_modifiers(["d", "hover", "c"], context)
       ["d", "hover", "c"]
@@ -84,7 +84,7 @@ defmodule Twm.SortModifiers do
       Enum.reduce(modifiers, {[], []}, fn modifier, {sorted_acc, unsorted_acc} ->
         is_position_sensitive =
           String.starts_with?(modifier, "[") or
-            MapSet.member?(order_sensitive_modifiers_set, modifier)
+            Enum.member?(order_sensitive_modifiers_set, modifier)
 
         if is_position_sensitive do
           # When we encounter a position-sensitive modifier, we sort the accumulated

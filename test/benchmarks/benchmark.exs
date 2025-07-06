@@ -2,7 +2,7 @@ defmodule TwmBenchmark do
   @moduledoc """
   Benchmarks for Twm performance testing.
 
-  Run with: mix run test/twm_benchmark.exs
+  Run with: mix run test/benchmarks/twm_benchmark.exs
   """
 
   @benchmark_data_path "test/benchmarks/tw-merge-benchmark-data.json"
@@ -21,14 +21,13 @@ defmodule TwmBenchmark do
     Benchee.run(
       %{
         "collection with cache" =>
-          {fn {_config, input_classes} ->
-             run_with_cache(fn ->
-               Twm.merge(input_classes)
-             end)
+          {fn {input_classes} ->
+             Twm.merge(input_classes)
            end,
            before_scenario: fn input ->
-             config = Twm.Config.get_default()
-             {config, input.()}
+             # config = Twm.Config.get_default()
+             start_cache_if_needed()
+             {input.()}
            end},
         "collection without cache" => {
           fn {config, input_classes} ->
@@ -42,19 +41,13 @@ defmodule TwmBenchmark do
         }
       },
       inputs: %{"benchmark_data" => prepare_input(benchmark_data)},
+      warmup: 5,
       time: 10,
       memory_time: 2,
-      parallel: 4,
+      parallel: 1,
       formatters: [
         Benchee.Formatters.Console
-      ],
-      before_scenario: fn input ->
-        start_cache_if_needed()
-        input
-      end,
-      after_scenario: fn _ ->
-        stop_cache_if_running()
-      end
+      ]
     )
 
     IO.puts("Benchmark complete!")
@@ -124,7 +117,7 @@ defmodule TwmBenchmark do
   defp start_cache_if_needed do
     case Process.whereis(Twm.Cache) do
       nil ->
-        case Twm.Cache.start_link(Twm.Config.get_default()) do
+        case Twm.Cache.start_link(config: Twm.Config.get_default()) do
           {:ok, _pid} -> :ok
           {:error, {:already_started, _pid}} -> :ok
           _error -> :ok
@@ -142,7 +135,7 @@ defmodule TwmBenchmark do
 
       pid ->
         Process.exit(pid, :normal)
-        :timer.sleep(50)
+        # :timer.sleep(50)
         :ok
     end
   end

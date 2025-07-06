@@ -8,6 +8,7 @@ defmodule Twm.Parser.ClassName do
 
   alias Twm.Types
   alias Twm.Context.ClassParsingContext
+  alias Twm.Config
 
   @important_modifier "!"
   @modifier_separator ":"
@@ -24,10 +25,10 @@ defmodule Twm.Parser.ClassName do
 
   * A Context struct containing the parsing configuration
   """
-  @spec create_parse_class_name(Types.config()) :: Context.t()
+  @spec create_parse_class_name(Config.t()) :: ClassParsingContext.t()
   def create_parse_class_name(config) do
-    prefix = Keyword.get(config, :prefix)
-    experimental_parse_class_name = Keyword.get(config, :experimental_parse_class_name)
+    prefix = Map.get(config, :prefix)
+    experimental_parse_class_name = Map.get(config, :experimental_parse_class_name)
 
     %ClassParsingContext{
       prefix: prefix,
@@ -62,6 +63,10 @@ defmodule Twm.Parser.ClassName do
 
   # Parse class name with prefix handling
   defp parse_class_name_with_prefix(class_name, %ClassParsingContext{prefix: nil}) do
+    do_parse_class_name(class_name)
+  end
+
+  defp parse_class_name_with_prefix(class_name, %ClassParsingContext{prefix: ""}) do
     do_parse_class_name(class_name)
   end
 

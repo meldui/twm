@@ -6,12 +6,12 @@ defmodule Twm.ClassGroupUtilsTest do
 
   describe "create_class_group_utils/1" do
     test "returns a map with required functions" do
-      config = [
+      config = %Twm.Config{
         class_groups: [],
         conflicting_class_groups: [],
         conflicting_class_group_modifiers: [],
         theme: []
-      ]
+      }
 
       context = ClassGroupUtils.create_class_group_utils(config)
 
@@ -22,7 +22,7 @@ defmodule Twm.ClassGroupUtilsTest do
     end
 
     test "get_class_group_id function works with simple classes" do
-      config = [
+      config = %Twm.Config{
         class_groups: [
           display: ["block", "inline", "flex"],
           position: ["static", "relative", "absolute"]
@@ -30,7 +30,7 @@ defmodule Twm.ClassGroupUtilsTest do
         conflicting_class_groups: [],
         conflicting_class_group_modifiers: [],
         theme: []
-      ]
+      }
 
       context = ClassGroupUtils.create_class_group_utils(config)
 
@@ -43,17 +43,19 @@ defmodule Twm.ClassGroupUtilsTest do
     end
 
     test "get_conflicting_class_group_ids function works" do
-      config = [
-        class_groups: [],
-        conflicting_class_groups: [
-          position: ["display", "float"],
-          display: ["position"]
-        ],
-        conflicting_class_group_modifiers: [
-          font_size: ["leading"]
-        ],
-        theme: []
-      ]
+      config =
+        Twm.Config.new(
+          cache_size: 10,
+          class_groups: [],
+          conflicting_class_groups: [
+            position: ["display", "float"],
+            display: ["position"]
+          ],
+          conflicting_class_group_modifiers: [
+            font_size: ["leading"]
+          ],
+          theme: []
+        )
 
       context = ClassGroupUtils.create_class_group_utils(config)
 
@@ -77,12 +79,14 @@ defmodule Twm.ClassGroupUtilsTest do
 
   describe "create_class_map/1" do
     test "returns a map with proper structure" do
-      config = [
-        class_groups: [
-          display: ["block", "inline"]
-        ],
-        theme: []
-      ]
+      config =
+        Twm.Config.new(
+          cache_size: 10,
+          class_groups: [
+            display: ["block", "inline"]
+          ],
+          theme: []
+        )
 
       class_map = ClassGroupUtils.create_class_map(config)
 
@@ -92,12 +96,12 @@ defmodule Twm.ClassGroupUtilsTest do
     end
 
     test "handles simple string classes" do
-      config = [
+      config = %Twm.Config{
         class_groups: [
           display: ["block", "inline"]
         ],
         theme: []
-      ]
+      }
 
       class_map = ClassGroupUtils.create_class_map(config)
 
@@ -109,12 +113,12 @@ defmodule Twm.ClassGroupUtilsTest do
     end
 
     test "handles hyphenated classes" do
-      config = [
+      config = %Twm.Config{
         class_groups: [
           spacing: ["space-x-1", "space-y-2"]
         ],
         theme: []
-      ]
+      }
 
       class_map = ClassGroupUtils.create_class_map(config)
 
@@ -133,7 +137,7 @@ defmodule Twm.ClassGroupUtilsTest do
     end
 
     test "handles nested object classes" do
-      config = [
+      config = %Twm.Config{
         class_groups: [
           spacing: [
             %{
@@ -143,7 +147,7 @@ defmodule Twm.ClassGroupUtilsTest do
           ]
         ],
         theme: []
-      ]
+      }
 
       class_map = ClassGroupUtils.create_class_map(config)
 
@@ -166,12 +170,12 @@ defmodule Twm.ClassGroupUtilsTest do
         String.match?(value, ~r/^\d+$/)
       end
 
-      config = [
+      config = %Twm.Config{
         class_groups: [
           spacing: [is_integer]
         ],
         theme: []
-      ]
+      }
 
       class_map = ClassGroupUtils.create_class_map(config)
 
@@ -183,12 +187,12 @@ defmodule Twm.ClassGroupUtilsTest do
     end
 
     test "handles empty class definitions" do
-      config = [
+      config = %Twm.Config{
         class_groups: [
           container: [""]
         ],
         theme: []
-      ]
+      }
 
       class_map = ClassGroupUtils.create_class_map(config)
 
@@ -200,7 +204,7 @@ defmodule Twm.ClassGroupUtilsTest do
     setup do
       is_color = fn value -> String.ends_with?(value, "-500") end
 
-      config = [
+      config = %Twm.Config{
         class_groups: [
           display: ["block", "inline", "flex", "grid"],
           colors: [is_color],
@@ -218,7 +222,7 @@ defmodule Twm.ClassGroupUtilsTest do
         ],
         conflicting_class_group_modifiers: [],
         theme: []
-      ]
+      }
 
       context = ClassGroupUtils.create_class_group_utils(config)
       {:ok, context: context}
@@ -258,14 +262,14 @@ defmodule Twm.ClassGroupUtilsTest do
 
     test "handles negative classes" do
       # Simulate negative spacing class
-      config = [
+      config = %Twm.Config{
         class_groups: [
           spacing: ["-m-1", "-p-1"]
         ],
         conflicting_class_groups: [],
         conflicting_class_group_modifiers: [],
         theme: []
-      ]
+      }
 
       # context = ClassGroupUtils.create_class_group_utils(config |> Twm.Config.update_class_map())
       context = ClassGroupUtils.create_class_group_utils(config)
@@ -276,12 +280,12 @@ defmodule Twm.ClassGroupUtilsTest do
 
   describe "arbitrary properties" do
     test "identifies arbitrary properties" do
-      config = [
+      config = %Twm.Config{
         class_groups: [],
         conflicting_class_groups: [],
         conflicting_class_group_modifiers: [],
         theme: []
-      ]
+      }
 
       context = ClassGroupUtils.create_class_group_utils(config)
 
@@ -292,12 +296,12 @@ defmodule Twm.ClassGroupUtilsTest do
     end
 
     test "ignores malformed arbitrary properties" do
-      config = [
+      config = %Twm.Config{
         class_groups: [],
         conflicting_class_groups: [],
         conflicting_class_group_modifiers: [],
         theme: []
-      ]
+      }
 
       context = ClassGroupUtils.create_class_group_utils(config)
 
@@ -309,7 +313,7 @@ defmodule Twm.ClassGroupUtilsTest do
 
   describe "conflicting class groups" do
     test "returns conflicts without postfix modifier" do
-      config = [
+      config = %Twm.Config{
         class_groups: [],
         conflicting_class_groups: [
           position: ["display"],
@@ -317,7 +321,7 @@ defmodule Twm.ClassGroupUtilsTest do
         ],
         conflicting_class_group_modifiers: [],
         theme: []
-      ]
+      }
 
       context = ClassGroupUtils.create_class_group_utils(config)
 
@@ -332,7 +336,7 @@ defmodule Twm.ClassGroupUtilsTest do
     end
 
     test "returns conflicts with postfix modifier" do
-      config = [
+      config = %Twm.Config{
         class_groups: [],
         conflicting_class_groups: [
           font_size: ["leading"]
@@ -341,7 +345,7 @@ defmodule Twm.ClassGroupUtilsTest do
           font_size: ["line_height"]
         ],
         theme: []
-      ]
+      }
 
       context = ClassGroupUtils.create_class_group_utils(config)
 
@@ -356,12 +360,12 @@ defmodule Twm.ClassGroupUtilsTest do
     end
 
     test "handles missing conflict groups" do
-      config = [
+      config = %Twm.Config{
         class_groups: [],
         conflicting_class_groups: [],
         conflicting_class_group_modifiers: [],
         theme: []
-      ]
+      }
 
       context = ClassGroupUtils.create_class_group_utils(config)
 
@@ -376,7 +380,7 @@ defmodule Twm.ClassGroupUtilsTest do
         String.match?(value, ~r/^\d+$/)
       end
 
-      config = [
+      config = %Twm.Config{
         class_groups: [
           spacing: [
             "auto",
@@ -390,7 +394,7 @@ defmodule Twm.ClassGroupUtilsTest do
         conflicting_class_groups: [],
         conflicting_class_group_modifiers: [],
         theme: []
-      ]
+      }
 
       context = ClassGroupUtils.create_class_group_utils(config)
 
@@ -412,14 +416,14 @@ defmodule Twm.ClassGroupUtilsTest do
         String.match?(value, ~r/^\d+\/\d+$/)
       end
 
-      config = [
+      config = %Twm.Config{
         class_groups: [
           width: [is_number, is_fraction, "full", "auto"]
         ],
         conflicting_class_groups: [],
         conflicting_class_group_modifiers: [],
         theme: []
-      ]
+      }
 
       context = ClassGroupUtils.create_class_group_utils(config)
 
@@ -433,13 +437,15 @@ defmodule Twm.ClassGroupUtilsTest do
 
   describe "edge cases" do
     test "handles empty class groups" do
-      config = [
-        class_groups: [],
-        conflicting_class_groups: [],
-        conflicting_class_group_modifiers: [],
-        theme: [],
-        class_map: []
-      ]
+      config =
+        Twm.Config.new(
+          cache_size: 10,
+          class_groups: [],
+          conflicting_class_groups: [],
+          conflicting_class_group_modifiers: [],
+          theme: [],
+          class_map: []
+        )
 
       context = ClassGroupUtils.create_class_group_utils(config)
 
@@ -447,7 +453,7 @@ defmodule Twm.ClassGroupUtilsTest do
     end
 
     test "handles missing config keys" do
-      config = []
+      config = Twm.Config.new([])
 
       context = ClassGroupUtils.create_class_group_utils(config)
 
@@ -456,7 +462,7 @@ defmodule Twm.ClassGroupUtilsTest do
     end
 
     test "handles deeply nested classes" do
-      config = [
+      config = %Twm.Config{
         class_groups: [
           complex: [
             %{
@@ -471,7 +477,7 @@ defmodule Twm.ClassGroupUtilsTest do
         conflicting_class_groups: [],
         conflicting_class_group_modifiers: [],
         theme: []
-      ]
+      }
 
       context = ClassGroupUtils.create_class_group_utils(config)
 
@@ -479,14 +485,14 @@ defmodule Twm.ClassGroupUtilsTest do
     end
 
     test "handles class names with multiple hyphens" do
-      config = [
+      config = %Twm.Config{
         class_groups: [
           spacing: ["space-x-reverse", "space-y-reverse"]
         ],
         conflicting_class_groups: [],
         conflicting_class_group_modifiers: [],
         theme: []
-      ]
+      }
 
       context = ClassGroupUtils.create_class_group_utils(config)
 

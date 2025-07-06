@@ -27,22 +27,39 @@ defmodule Twm.Merger do
       "pt-4 pb-3"
 
   """
-  @spec merge_classes(String.t(), keyword()) :: String.t()
-  def merge_classes(classes, config) when is_binary(classes) and is_list(config) do
-    if classes == "" do
-      ""
-    else
-      class_list = String.split(classes, ~r/\s+/, trim: true)
+  @spec merge_classes(
+          String.t(),
+          Twm.Config.t(),
+          Twm.Context.ClassGroupProcessingContext.t() | nil
+        ) ::
+          String.t()
+  def merge_classes(classes, config, class_utils_context \\ nil)
 
-      # TODO: Find out ways to cache this
-      class_utils_context = ClassGroupUtils.create_class_group_utils(config)
+  def merge_classes("", _, _), do: ""
 
-      # Create class name parser context for the config
-      parse_class_name_context = ClassName.create_parse_class_name(config)
+  def merge_classes(classes, %Twm.Config{} = config, nil)
+      when is_binary(classes) do
+    class_list = String.split(classes, ~r/\s+/, trim: true)
 
-      # Parse classes and merge conflicts
-      merge_class_list(class_list, class_utils_context, parse_class_name_context, config)
-    end
+    # TODO: Find out ways to cache this
+    class_utils_context = ClassGroupUtils.create_class_group_utils(config)
+
+    # Create class name parser context for the config
+    parse_class_name_context = ClassName.create_parse_class_name(config)
+
+    # Parse classes and merge conflicts
+    merge_class_list(class_list, class_utils_context, parse_class_name_context, config)
+  end
+
+  def merge_classes(classes, %Twm.Config{} = config, class_utils_context)
+      when is_binary(classes) do
+    class_list = String.split(classes, ~r/\s+/, trim: true)
+
+    # Create class name parser context for the config
+    parse_class_name_context = ClassName.create_parse_class_name(config)
+
+    # Parse classes and merge conflicts
+    merge_class_list(class_list, class_utils_context, parse_class_name_context, config)
   end
 
   # Merge a list of classes using the class utilities context
@@ -104,7 +121,8 @@ defmodule Twm.Merger do
   # Parse a class with its modifiers and important flag
   defp parse_class_with_modifiers(class, class_utils_context, parse_class_name_context, config) do
     # First, try to get the class group ID from the original class
-    original_class_group_id = ClassGroupUtils.get_class_group_id(class, class_utils_context)
+    original_class_group_id =
+      ClassGroupUtils.get_class_group_id(class, class_utils_context)
 
     # Use the context-based parser
     parsed_class_name = ClassName.parse_class_name(class, parse_class_name_context)
@@ -198,7 +216,7 @@ defmodule Twm.Merger do
 
     # Add prefix if configured
     prefix_str =
-      case Keyword.get(config, :prefix) do
+      case Map.get(config, :prefix) do
         nil -> ""
         "" -> ""
         prefix -> prefix <> ":"

@@ -9,6 +9,39 @@ defmodule Twm.Config do
   alias Twm.Types
   alias Twm.Config.Default
 
+  @typedoc """
+  Configuration for the Twm library.
+
+  * `:cache_name` - Name of the LRU cache (if enabled)
+  * `:prefix` - Optional prefix for Tailwind classes
+  * `:theme` - Theme configuration
+  * `:class_groups` - Class group definitions
+  * `:conflicting_class_groups` - Groups of class names that conflict with each other
+  * `:cache_size` - Size of the LRU cache (if enabled)
+  * `:experimental_parse_class_name` - Optional experimental class name parser function
+  """
+  defstruct [
+    :cache_name,
+    :cache_size,
+    :prefix,
+    :theme,
+    :class_groups,
+    :conflicting_class_groups,
+    :conflicting_class_group_modifiers,
+    :order_sensitive_modifiers,
+    :experimental_parse_class_name
+  ]
+
+  @type t :: %__MODULE__{
+          cache_name: String.t() | atom() | nil,
+          cache_size: non_neg_integer(),
+          prefix: String.t() | nil,
+          theme: keyword(),
+          class_groups: keyword(),
+          conflicting_class_groups: keyword(),
+          experimental_parse_class_name: (keyword() -> Types.parsed_class_name())
+        }
+
   @doc """
   Returns the default configuration for Twm.
 
@@ -19,10 +52,10 @@ defmodule Twm.Config do
       500
 
   """
-  @spec get_default() :: Types.config()
+  @spec get_default() :: __MODULE__.t()
   def get_default, do: Default.get()
 
-  @spec new(keyword()) :: Types.config()
+  @spec new(keyword()) :: __MODULE__.t()
   def new(config) do
     case config |> validate() do
       {:ok, config} -> config
@@ -55,7 +88,7 @@ defmodule Twm.Config do
       ["custom-class"]
 
   """
-  @spec extend(keyword()) :: Types.config()
+  @spec extend(keyword()) :: __MODULE__.t()
   def extend(options \\ []) do
     default_config = get_default()
 
@@ -79,20 +112,20 @@ defmodule Twm.Config do
     end
   end
 
-  @spec extend(Types.config(), fun()) :: Types.config()
-  def extend(config, extend_fn) do
+  @spec extend(__MODULE__.t(), fun()) :: __MODULE__.t()
+  def extend(%__MODULE__{} = config, extend_fn) do
     extend_fn.(config)
   end
 
   # Helper function to update a config option if a value is provided
   defp maybe_update_option(config, _key, nil), do: config
-  defp maybe_update_option(config, key, value), do: Keyword.put(config, key, value)
+  defp maybe_update_option(config, key, value), do: Map.put(config, key, value)
 
   # Override configuration values
   defp override_config(config, override_values) when is_list(override_values) do
     override_values
     |> Enum.reduce(config, fn {key, value}, acc ->
-      Keyword.put(acc, key, value)
+      Map.put(acc, key, value)
     end)
   end
 
@@ -100,10 +133,10 @@ defmodule Twm.Config do
   defp extend_config(config, extend_values) when is_list(extend_values) do
     extend_values
     |> Enum.reduce(config, fn {key, value}, acc ->
-      current_value = Keyword.get(acc, key)
+      current_value = Map.get(acc, key)
 
       extended_value = merge(current_value, value)
-      Keyword.put(acc, key, extended_value)
+      Map.put(acc, key, extended_value)
     end)
   end
 
@@ -140,9 +173,14 @@ defmodule Twm.Config do
       {:error, "Missing required configuration keys: cache_size, theme, class_groups, conflicting_class_groups"}
 
   """
+  def validate(%Twm.Config{} = config) do
+    validate(Map.to_list(config))
+  end
+
   @spec validate(keyword()) :: {:ok, keyword()} | {:error, String.t()}
   def validate(config) when is_list(config) do
-    required_keys = [:cache_size, :theme, :class_groups, :conflicting_class_groups]
+    # required_keys = [:cache_size, :theme, :class_groups, :conflicting_class_groups]
+    required_keys = []
 
     missing_keys =
       Enum.filter(required_keys, fn key ->
@@ -150,7 +188,19 @@ defmodule Twm.Config do
       end)
 
     if Enum.empty?(missing_keys) do
-      {:ok, config}
+      {:ok,
+       %Twm.Config{
+         cache_name: Keyword.get(config, :cache_name, Twm.Cache),
+         cache_size: Keyword.get(config, :cache_size, 10000),
+         theme: Keyword.get(config, :theme, []),
+         class_groups: Keyword.get(config, :class_groups, []),
+         conflicting_class_groups: Keyword.get(config, :conflicting_class_groups, []),
+         conflicting_class_group_modifiers:
+           Keyword.get(config, :conflicting_class_group_modifiers, []),
+         order_sensitive_modifiers: Keyword.get(config, :order_sensitive_modifiers, []),
+         experimental_parse_class_name: Keyword.get(config, :experimental_parse_class_name, nil),
+         prefix: Keyword.get(config, :prefix, nil)
+       }}
     else
       {:error, "Missing required configuration keys: #{Enum.join(missing_keys, ", ")}"}
     end

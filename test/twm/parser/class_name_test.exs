@@ -102,7 +102,7 @@ defmodule Twm.Parser.ClassNameTest do
 
   describe "create_parse_class_name/1" do
     test "creates a context that parses class names" do
-      context = ClassName.create_parse_class_name([])
+      context = ClassName.create_parse_class_name(Twm.Config.new([]))
       result = ClassName.parse_class_name("hover:text-red-500", context)
 
       assert result == %{
@@ -115,7 +115,7 @@ defmodule Twm.Parser.ClassNameTest do
     end
 
     test "handles prefix when configured" do
-      context = ClassName.create_parse_class_name(prefix: "tw")
+      context = ClassName.create_parse_class_name(Twm.Config.new(prefix: "tw"))
 
       # When prefix matches
       result = ClassName.parse_class_name("tw:hover:text-red-500", context)
@@ -151,7 +151,9 @@ defmodule Twm.Parser.ClassNameTest do
       end
 
       context =
-        ClassName.create_parse_class_name(experimental_parse_class_name: experimental_fn)
+        ClassName.create_parse_class_name(
+          Twm.Config.new(experimental_parse_class_name: experimental_fn)
+        )
 
       result = ClassName.parse_class_name("text-red-500", context)
 

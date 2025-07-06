@@ -20,16 +20,17 @@ defmodule Twm.Config.ThemeIntegrationTest do
       theme_spacing = Theme.from_theme(:spacing)
 
       # Create a simple configuration with theme getters
-      config = [
-        theme: [
-          spacing: ["1", "2", "4", "8", "16"]
-        ],
-        class_groups: [
-          margin: ["auto", theme_spacing]
-        ],
-        conflicting_class_groups: [],
-        conflicting_class_group_modifiers: []
-      ]
+      config =
+        Twm.Config.new(
+          theme: [
+            spacing: ["1", "2", "4", "8", "16"]
+          ],
+          class_groups: [
+            margin: ["auto", theme_spacing]
+          ],
+          conflicting_class_groups: [],
+          conflicting_class_group_modifiers: []
+        )
 
       # Create class group utils
       context = ClassGroupUtils.create_class_group_utils(config)

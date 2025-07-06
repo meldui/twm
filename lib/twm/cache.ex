@@ -67,6 +67,8 @@ defmodule Twm.Cache do
   use GenServer
   require Logger
 
+  alias Twm.ClassGroupUtils
+
   # Client API
 
   @doc """
@@ -82,8 +84,13 @@ defmodule Twm.Cache do
   def start_link(opts \\ []) do
     name = Keyword.get(opts, :name, __MODULE__)
     config = Keyword.get(opts, :config, Twm.Config.get_default())
+    class_utils_context = ClassGroupUtils.create_class_group_utils(config)
 
-    GenServer.start_link(__MODULE__, %{config: config, config_cache_name: name}, name: name)
+    GenServer.start_link(
+      __MODULE__,
+      %{config: config, class_utils_context: class_utils_context, config_cache_name: name},
+      name: name
+    )
   end
 
   @doc """
@@ -143,6 +150,40 @@ defmodule Twm.Cache do
         # When a name is provided, check if the process exists
         if Process.whereis(name) do
           GenServer.call(name, {:get, key})
+        else
+          :error
+        end
+    end
+  end
+
+  @doc """
+  Retrieves a value from the cache by key. If it is not present creates one, stores it and returns it.
+
+  Returns `{:ok, value}` or `:error` if the cache doesn't exist.
+
+  ## Examples
+
+      # Start a cache server for doctest
+      iex> cache_pid = Twm.Cache.ensure_started(10)
+      iex> Twm.Cache.put(cache_pid, "key1", "value1")
+      :ok
+      iex> Twm.Cache.get(cache_pid, "key1")
+      {:ok, "value1"}
+      iex> Twm.Cache.get(cache_pid, "nonexistent_key")
+      :error
+
+  """
+  @spec get_or_create(GenServer.server(), any()) :: {:ok, any()} | :error
+  def get_or_create(server \\ __MODULE__, key) do
+    case server do
+      pid when is_pid(pid) ->
+        # When a pid is provided, call it directly
+        GenServer.call(pid, {:get, key})
+
+      name when is_atom(name) ->
+        # When a name is provided, check if the process exists
+        if Process.whereis(name) do
+          GenServer.call(name, {:get_or_create, key})
         else
           :error
         end
@@ -289,44 +330,25 @@ defmodule Twm.Cache do
     end
   end
 
-  # Debug helper function - only used in development/testing
-  @doc false
-  def get_state(server \\ __MODULE__) do
-    case server do
-      pid when is_pid(pid) ->
-        # When a pid is provided, call it directly
-        GenServer.call(pid, :get_state)
-
-      name when is_atom(name) ->
-        # When a name is provided, check if the process exists
-        if Process.whereis(name) do
-          GenServer.call(name, :get_state)
-        else
-          :error
-        end
-    end
-  end
-
   # Server Callbacks
 
   @impl true
-  def init(%{config: config, config_cache_name: name}) do
+  def init(%{config: config, class_utils_context: class_utils_context}) do
     # State structure:
     # %{
     #   entries: %{key => value},        # Map of cached key-value pairs
     #   access_order: [key1, key2, ...], # List with most recently used keys first
     #   max_size: cache_size             # Maximum number of entries
     # }
-    :ets.new(name, [:named_table, :protected, :set, read_concurrency: true])
 
-    :ets.insert(name, {:config, config})
-
-    :ets.insert(
-      name,
-      {:class_group_utils, Twm.ClassGroupUtils.create_class_group_utils(config)}
-    )
-
-    {:ok, %{entries: %{}, access_order: [], max_size: config[:cache_size]}}
+    {:ok,
+     %{
+       entries: %{},
+       access_order: [],
+       max_size: Map.get(config, :cache_size, 10000),
+       config: config,
+       class_utils_context: class_utils_context
+     }}
   end
 
   @impl true
@@ -345,8 +367,27 @@ defmodule Twm.Cache do
   end
 
   @impl true
-  def handle_call(:get_state, _from, state) do
-    {:reply, state, state}
+  def handle_call({:get_or_create, key}, _from, state) do
+    case Map.fetch(state.entries, key) do
+      {:ok, value} ->
+        # Move key to front of access_order (most recently used)
+        # Remove the key from its current position and add it to the front
+        new_access_order = [key | List.delete(state.access_order, key)]
+        new_state = %{state | access_order: new_access_order}
+        {:reply, {:ok, value}, new_state}
+
+      :error ->
+        value = Twm.Merger.merge_classes(key, state.config, state.class_utils_context)
+        # Check if key already exists
+        {new_entries, new_access_order} = new_entries_state(state, key, value)
+
+        # Ensure we don't exceed max_size
+        {final_entries, final_access_order} =
+          final_entries_state(state, new_entries, new_access_order)
+
+        {:reply, {:ok, value},
+         %{state | entries: final_entries, access_order: final_access_order}}
+    end
   end
 
   @impl true
@@ -357,40 +398,11 @@ defmodule Twm.Cache do
   @impl true
   def handle_cast({:put, key, value}, state) do
     # Check if key already exists
-    {new_entries, new_access_order} =
-      case Map.has_key?(state.entries, key) do
-        true ->
-          # Update existing key and move to front of access order
-          updated_access_order = [key | List.delete(state.access_order, key)]
-
-          {
-            Map.put(state.entries, key, value),
-            updated_access_order
-          }
-
-        false ->
-          # Add new key-value pair
-          updated_access_order = [key | state.access_order]
-
-          {
-            Map.put(state.entries, key, value),
-            updated_access_order
-          }
-      end
+    {new_entries, new_access_order} = new_entries_state(state, key, value)
 
     # Ensure we don't exceed max_size
     {final_entries, final_access_order} =
-      if map_size(new_entries) > state.max_size do
-        # Get the least recently used key (last in the list)
-        lru_key = List.last(new_access_order)
-
-        {
-          Map.delete(new_entries, lru_key),
-          Enum.drop(new_access_order, -1)
-        }
-      else
-        {new_entries, new_access_order}
-      end
+      final_entries_state(state, new_entries, new_access_order)
 
     {:noreply, %{state | entries: final_entries, access_order: final_access_order}}
   end
@@ -420,5 +432,41 @@ defmodule Twm.Cache do
 
     {:noreply,
      %{state | entries: final_entries, access_order: final_access_order, max_size: new_size}}
+  end
+
+  defp new_entries_state(state, key, value) do
+    case Map.has_key?(state.entries, key) do
+      true ->
+        # Update existing key and move to front of access order
+        updated_access_order = [key | List.delete(state.access_order, key)]
+
+        {
+          Map.put(state.entries, key, value),
+          updated_access_order
+        }
+
+      false ->
+        # Add new key-value pair
+        updated_access_order = [key | state.access_order]
+
+        {
+          Map.put(state.entries, key, value),
+          updated_access_order
+        }
+    end
+  end
+
+  defp final_entries_state(state, new_entries, new_access_order) do
+    if map_size(new_entries) > state.max_size do
+      # Get the least recently used key (last in the list)
+      lru_key = List.last(new_access_order)
+
+      {
+        Map.delete(new_entries, lru_key),
+        Enum.drop(new_access_order, -1)
+      }
+    else
+      {new_entries, new_access_order}
+    end
   end
 end

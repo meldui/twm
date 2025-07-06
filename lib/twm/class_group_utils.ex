@@ -9,6 +9,7 @@ defmodule Twm.ClassGroupUtils do
   """
 
   alias Twm.Context.ClassGroupProcessingContext
+  alias Twm.Config
 
   @type class_part_object :: [
           next_part: keyword(),
@@ -37,24 +38,24 @@ defmodule Twm.ClassGroupUtils do
 
   ## Examples
 
-      iex> config = [
+      iex> config = Twm.Config.new([
       ...>   class_groups: [display: ["block", "inline"]],
       ...>   conflicting_class_groups: [display: []],
       ...>   conflicting_class_group_modifiers: [],
       ...>   theme: []
-      ...> ]
+      ...> ])
       iex> context = Twm.ClassGroupUtils.create_class_group_utils(config)
       iex> Twm.ClassGroupUtils.get_class_group_id("block", context)
       "display"
 
   """
-  @spec create_class_group_utils(keyword()) :: Context.t()
+  @spec create_class_group_utils(Config.t()) :: ClassGroupProcessingContext.t()
   def create_class_group_utils(config) do
     class_map = create_class_map(config)
-    conflicting_class_groups = Keyword.get(config, :conflicting_class_groups, [])
+    conflicting_class_groups = Map.get(config, :conflicting_class_groups, [])
 
     conflicting_class_group_modifiers =
-      Keyword.get(config, :conflicting_class_group_modifiers, [])
+      Map.get(config, :conflicting_class_group_modifiers, [])
 
     %ClassGroupProcessingContext{
       class_map: class_map,
@@ -73,7 +74,7 @@ defmodule Twm.ClassGroupUtils do
 
   ## Examples
 
-      iex> config = [class_groups: [display: ["block"]], theme: []]
+      iex> config = Twm.Config.new([class_groups: [display: ["block"]], theme: []])
       iex> context = Twm.ClassGroupUtils.create_class_group_utils(config)
       iex> Twm.ClassGroupUtils.get_class_group_id("block", context)
       "display"
@@ -95,11 +96,11 @@ defmodule Twm.ClassGroupUtils do
 
   ## Examples
 
-      iex> config = [
+      iex> config = Twm.Config.new([
       ...>   class_groups: [display: ["block"]],
       ...>   conflicting_class_groups: [display: ["position"]],
       ...>   conflicting_class_group_modifiers: []
-      ...> ]
+      ...> ])
       iex> context = Twm.ClassGroupUtils.create_class_group_utils(config)
       iex> Twm.ClassGroupUtils.get_conflicting_class_group_ids("display", false, context)
       ["position"]
@@ -128,19 +129,19 @@ defmodule Twm.ClassGroupUtils do
 
   ## Examples
 
-      iex> config = [
+      iex> config = Twm.Config.new([
       ...>   class_groups: [display: ["block", "inline"]],
       ...>   theme: []
-      ...> ]
+      ...> ])
       iex> class_map = Twm.ClassGroupUtils.create_class_map(config)
       iex> class_map[:next_part][:block][:class_group_id]
       "display"
 
   """
-  @spec create_class_map(keyword()) :: keyword()
+  @spec create_class_map(Twm.Config.t()) :: keyword()
   def create_class_map(config) do
-    theme = Keyword.get(config, :theme, [])
-    class_groups = Keyword.get(config, :class_groups, [])
+    theme = Map.get(config, :theme, [])
+    class_groups = Map.get(config, :class_groups, [])
 
     initial_map = [
       next_part: [],

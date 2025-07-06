@@ -54,7 +54,6 @@ defmodule Twm.ModifiersTest do
     test "custom configuration postfix modifiers" do
       config =
         Twm.Config.new(
-          cache_size: 10,
           theme: [],
           class_groups: [
             foo: ["foo-1/2", "foo-2/3"],

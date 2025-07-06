@@ -6,14 +6,14 @@ defmodule Twm.SortModifiersTest do
 
   describe "create_sort_modifiers/1" do
     test "returns a context that sorts modifiers" do
-      config = [order_sensitive_modifiers: ["hover", "focus"]]
+      config = Twm.Config.new(order_sensitive_modifiers: ["hover", "focus"])
       context = SortModifiers.create_sort_modifiers(config)
 
       assert %Twm.Context.ModifierSortingContext{} = context
     end
 
     test "handles empty order_sensitive_modifiers" do
-      config = [order_sensitive_modifiers: []]
+      config = Twm.Config.new(order_sensitive_modifiers: [])
       context = SortModifiers.create_sort_modifiers(config)
 
       result = SortModifiers.sort_modifiers(["d", "c", "e"], context)
@@ -21,7 +21,7 @@ defmodule Twm.SortModifiersTest do
     end
 
     test "handles missing order_sensitive_modifiers key" do
-      config = []
+      config = Twm.Config.new([])
       context = SortModifiers.create_sort_modifiers(config)
 
       result = SortModifiers.sort_modifiers(["d", "c", "e"], context)
@@ -31,9 +31,10 @@ defmodule Twm.SortModifiersTest do
 
   describe "sort_modifiers/2" do
     setup do
-      config = [
-        order_sensitive_modifiers: ["hover", "focus", "active", "first", "last", "a", "b"]
-      ]
+      config =
+        Twm.Config.new(
+          order_sensitive_modifiers: ["hover", "focus", "active", "first", "last", "a", "b"]
+        )
 
       context = SortModifiers.create_sort_modifiers(config)
       {:ok, context: context}
@@ -129,7 +130,7 @@ defmodule Twm.SortModifiersTest do
     end
 
     test "empty order sensitive modifiers treats all as regular" do
-      config = [order_sensitive_modifiers: []]
+      config = Twm.Config.new(order_sensitive_modifiers: [])
       context = SortModifiers.create_sort_modifiers(config)
       modifiers = ["e", "hover", "d", "focus", "c"]
       result = SortModifiers.sort_modifiers(modifiers, context)
@@ -139,7 +140,7 @@ defmodule Twm.SortModifiersTest do
     end
 
     test "arbitrary variants are always position-sensitive regardless of config" do
-      config = [order_sensitive_modifiers: []]
+      config = Twm.Config.new(order_sensitive_modifiers: [])
       context = SortModifiers.create_sort_modifiers(config)
       modifiers = ["d", "[data-test]", "c", "[custom-variant]", "e"]
       result = SortModifiers.sort_modifiers(modifiers, context)
@@ -158,7 +159,7 @@ defmodule Twm.SortModifiersTest do
       # This means modifiers ['c', 'd', 'e'] should become ['c', 'd', 'e'] (already sorted)
       # But modifiers ['d', 'c', 'e'] should become ['c', 'd', 'e']
 
-      config = [order_sensitive_modifiers: []]
+      config = Twm.Config.new(order_sensitive_modifiers: [])
       context = SortModifiers.create_sort_modifiers(config)
 
       result1 = SortModifiers.sort_modifiers(["c", "d", "e"], context)
@@ -172,7 +173,7 @@ defmodule Twm.SortModifiersTest do
       # Based on the test with orderSensitiveModifiers: ['a', 'b']
       # 'a:b:foo-1 b:a:foo-2' stays as separate classes because modifiers differ
 
-      config = [order_sensitive_modifiers: ["a", "b"]]
+      config = Twm.Config.new(order_sensitive_modifiers: ["a", "b"])
       context = SortModifiers.create_sort_modifiers(config)
 
       # a:b should stay a:b
