@@ -44,7 +44,7 @@ defmodule Twm.MixProject do
       maintainers: ["Dipayan Bhowmick"],
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
-      files: ~w(lib .formatter.exs mix.exs README.md LICENSE)
+      files: ~w(lib .formatter.exs mix.exs README.md LICENSE.md)
     ]
   end
 
